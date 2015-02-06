@@ -1,5 +1,4 @@
 require File.expand_path("../../Abstract/abstract-qafoo-php-extension", __FILE__)
-require 'net/http'
 
 class Php56Qafooprofiler < AbstractQafooPhp56Extension
   init
@@ -20,6 +19,10 @@ class Php56Qafooprofiler < AbstractQafooPhp56Extension
                             phpconfig
     system "make"
     prefix.install "modules/qafooprofiler.so"
+
+    extension_dir = `php-config --extension-dir`.strip!
+    qp = File.expand_path("../../Files/QafooProfiler.php", __FILE__)
+    FileUtils.copy_file(qp, extension_dir + "/QafooProfiler.php")
 
     write_config_file if build.with? "config-file"
   end
