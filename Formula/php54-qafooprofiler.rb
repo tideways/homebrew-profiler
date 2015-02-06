@@ -1,6 +1,6 @@
 require File.expand_path("../../Abstract/abstract-qafoo-php-extension", __FILE__)
 
-class Php56Qafooprofiler < AbstractQafooPhp56Extension
+class Php54Qafooprofiler < AbstractQafooPhp54Extension
   init
   homepage 'https://github.com/qafoolabs/php-profiler-extension'
   url 'https://github.com/qafoolabs/php-profiler-extension/archive/v1.3.7.tar.gz'
