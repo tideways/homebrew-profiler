@@ -9,7 +9,8 @@ class Php56Qafooprofiler < AbstractQafooPhp56Extension
   head 'https://github.com/qafoolabs/php-profiler-extension.git'
   version 'v1.3.7'
 
-  depends_on 'pcre', 'curl'
+  depends_on 'pcre'
+  depends_on 'curl'
 
   def install
     ENV.universal_binary if build.universal?
