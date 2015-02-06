@@ -21,4 +21,10 @@ class Php55Qafooprofiler < AbstractQafooPhp55Extension
 
     write_config_file if build.with? "config-file"
   end
+
+  def config_file
+    super + <<-EOS.undent
+      qafooprofiler.connection=#{var}/run/qprofd.sock
+    EOS
+  end
 end
