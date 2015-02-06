@@ -17,3 +17,8 @@ With this repository you can install the Qafoo Profiler Daemon, Commandline-Tool
 4. Install Commandline Tool
 
 	brew install qafooprofiler-cli
+
+## Acknowledgements
+
+This work is based on [homebrew-php](https://github.com/Homebrew/homebrew-php)
+and uses parts of their codebase to work with different PHP versions.
