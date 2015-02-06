@@ -2,21 +2,26 @@
 
 With this repository you can install the Qafoo Profiler Daemon, Commandline-Tool and PHP Extension via Homebrew.
 
+Requirements: [homebrew-php](https://github.com/Homebrew/homebrew-php)
+
 1. Tap this repository
 
-	brew tap qafoolabs/homebrew-profiler
+	    brew tap qafoolabs/homebrew-profiler
 
 2. Install PHP Extension
 
-	brew install qafooprofiler-php
+	    brew install php53-qafooprofiler
+	    brew install php54-qafooprofiler
+	    brew install php55-qafooprofiler
+	    brew install php56-qafooprofiler
 
 3. Install Daemon
 
-	brew install qafooprofiler-daemon
+	    brew install qafooprofiler-daemon
 
 4. Install Commandline Tool
 
-	brew install qafooprofiler-cli
+	    brew install qafooprofiler-cli
 
 ## Acknowledgements
 
