@@ -20,6 +20,10 @@ class Php55Qafooprofiler < AbstractQafooPhp55Extension
     system "make"
     prefix.install "modules/qafooprofiler.so"
 
+    extension_dir = `php-config --extension-dir`.strip!
+    qp = File.expand_path("../../Files/QafooProfiler.php", __FILE__)
+    FileUtils.copy_file(qp, extension_dir + "/QafooProfiler.php")
+
     write_config_file if build.with? "config-file"
   end
 
