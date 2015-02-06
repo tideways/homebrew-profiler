@@ -1,4 +1,5 @@
 require File.expand_path("../../Abstract/abstract-qafoo-php-extension", __FILE__)
+require 'net/http'
 
 class Php56Qafooprofiler < AbstractQafooPhp56Extension
   init
@@ -19,6 +20,21 @@ class Php56Qafooprofiler < AbstractQafooPhp56Extension
     system "make"
     prefix.install "modules/qafooprofiler.so"
 
+=begin
+    Net::HTTP.start("github.com") do |http|
+        resp = http.get("/QafooLabs/profiler/releases/download/v1.3.5/QafooProfiler.php")
+        open(prefix / "modules/QafooProfiler.php", "wb") do |file|
+            file.write(resp.body)
+        end
+    end
+=end
+
     write_config_file if build.with? "config-file"
+  end
+
+  def config_file
+    super + <<-EOS.undent
+      qafooprofiler.connection=#{var}/run/qprofd.sock
+    EOS
   end
 end
