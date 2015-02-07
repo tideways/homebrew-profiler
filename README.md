@@ -23,6 +23,12 @@ Requirements: [homebrew-php](https://github.com/Homebrew/homebrew-php)
 
 	    brew install qafooprofiler-cli
 
+## Feedback: Help us improve Installation
+
+If using this homebrew recipe is at any point complicated for you or not
+intuitive that is our mistake. Please help us improve installation by sending
+notes to support@profiler.qafoolabs.com
+
 ## Acknowledgements
 
 This work is based on [homebrew-php](https://github.com/Homebrew/homebrew-php)
