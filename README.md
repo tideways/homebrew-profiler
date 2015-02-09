@@ -8,12 +8,16 @@ Requirements: [homebrew-php](https://github.com/Homebrew/homebrew-php)
 
 	    brew tap qafoolabs/homebrew-profiler
 
-2. Install PHP Extension
+2. a.) Install PHP Extension (if you have `homebrew-php`)
 
 	    brew install php53-qafooprofiler
 	    brew install php54-qafooprofiler
 	    brew install php55-qafooprofiler
 	    brew install php56-qafooprofiler
+
+2. b.) Install PHP using System PHP
+
+        brew install php54-qafooprofiler --without-homebrew-php
 
 3. Install Daemon
 
