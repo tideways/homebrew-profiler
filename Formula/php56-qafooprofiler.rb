@@ -10,6 +10,7 @@ class Php56Qafooprofiler < AbstractQafooPhp56Extension
 
   depends_on 'pcre'
   depends_on 'curl'
+  depends_on 'php56'
 
   def install
     ENV.universal_binary if build.universal?

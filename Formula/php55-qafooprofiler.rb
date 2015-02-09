@@ -10,6 +10,7 @@ class Php55Qafooprofiler < AbstractQafooPhp55Extension
 
   depends_on 'pcre'
   depends_on 'curl'
+  depends_on 'php55'
 
   def install
     ENV.universal_binary if build.universal?
