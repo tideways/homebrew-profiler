@@ -34,7 +34,7 @@ class QafooprofilerDaemon < Formula
               <array>
                 <string>#{opt_bin}/#{bin_name}</string>
                 <string>--address=#{var}/run/qprofd.sock</string>
-                <string>--log=#{var}/qprofd</string>
+                <string>--log=#{var}/qprofd/qprofd.log</string>
                 <string>--env=development</string>
               </array>
               <key>RunAtLoad</key>
