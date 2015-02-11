@@ -29,7 +29,7 @@ class Php54Qafooprofiler < AbstractQafooPhp54Extension
 
   def config_file
     super + <<-EOS.undent
-      qafooprofiler.connection=#{var}/run/qprofd.sock
+      qafooprofiler.connection=unix://#{var}/run/qprofd.sock
     EOS
   end
 end
