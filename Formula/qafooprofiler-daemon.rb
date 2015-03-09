@@ -3,8 +3,8 @@ require "formula"
 class QafooprofilerDaemon < Formula
     homepage 'https://qafoolabs.com'
 
-    url 'https://s3-eu-west-1.amazonaws.com/qafoo-profiler/downloads/qprofd_darwin_amd64_0.3.3.tar.gz' if MacOS.prefer_64_bit?
-    url 'https://s3-eu-west-1.amazonaws.com/qafoo-profiler/downloads/qprofd_darwin_386_0.3.3.tar.gz' if not MacOS.prefer_64_bit?
+    url 'https://s3-eu-west-1.amazonaws.com/qafoo-profiler/downloads/qprofd_macos_amd64-0.4.1.tar.gz' if MacOS.prefer_64_bit?
+    url 'https://s3-eu-west-1.amazonaws.com/qafoo-profiler/downloads/qprofd_macos_i386-0.4.1.tar.gz' if not MacOS.prefer_64_bit?
     sha1 '34799122a28c49eb96433b81001e85c4cf2ed6f8' if MacOS.prefer_64_bit?
 
     def bin_name
