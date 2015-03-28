@@ -1,10 +1,16 @@
 require File.expand_path("../../Abstract/abstract-tideways-php-extension.rb", __FILE__)
 
 class Php53Tideways < AbstractTidewaysPhpExtension
-  def self.init opts=[]
-    super()
-    depends_on "php53" => opts if build.with?('homebrew-php')
-  end
+    init
+    homepage 'https://github.com/tideways/php-profiler-extension'
+    head 'https://github.com/tideways/php-profiler-extension.git'
+    version 'v1.4.0'
 
-  init
+    depends_on 'pcre'
+    depends_on 'curl'
+
+    def self.init opts=[]
+        super()
+        depends_on "php53" => opts if build.with?('homebrew-php')
+    end
 end
