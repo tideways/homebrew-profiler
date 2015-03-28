@@ -25,7 +25,7 @@ class AbstractTidewaysPhpExtension < Formula
     system "make"
     prefix.install "modules/tideways.so"
 
-    extension_dir = `php-config --extension-dir`.strip!
+    extension_dir = `#{Formula[php_formula].opt_bin}/php-config --extension-dir`.strip!
     qp = File.expand_path("../../Files/Tideways.php", __FILE__)
     FileUtils.copy_file(qp, extension_dir + "/Tideways.php")
 
