@@ -16,14 +16,6 @@ class InvalidPhpizeError < RuntimeError
 end
 
 class AbstractTidewaysPhpExtension < Formula
-  homepage 'https://github.com/tideways/php-profiler-extension'
-  head 'https://github.com/tideways/php-profiler-extension.git'
-  version 'v1.4.0'
-  url 'https://github.com/qafoolabs/php-profiler-extension/archive/v1.4.0.tar.gz'
-
-  depends_on 'pcre'
-  depends_on 'curl'
-
   def install
     ENV.universal_binary if build.universal?
 
@@ -41,6 +33,13 @@ class AbstractTidewaysPhpExtension < Formula
   end
 
   def initialize(*)
+    homepage 'https://github.com/tideways/php-profiler-extension'
+    head 'https://github.com/tideways/php-profiler-extension.git'
+    version 'v1.4.0'
+
+    depends_on 'pcre'
+    depends_on 'curl'
+
     super
 
     if build.without? 'homebrew-php'
