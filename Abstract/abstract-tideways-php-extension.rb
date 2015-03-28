@@ -33,13 +33,6 @@ class AbstractTidewaysPhpExtension < Formula
   end
 
   def initialize(*)
-    homepage 'https://github.com/tideways/php-profiler-extension'
-    head 'https://github.com/tideways/php-profiler-extension.git'
-    version 'v1.4.0'
-
-    depends_on 'pcre'
-    depends_on 'curl'
-
     super
 
     if build.without? 'homebrew-php'
