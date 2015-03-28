@@ -1,8 +1,8 @@
 <?php
-namespace QafooLabs\Profiler;
+namespace Tideways\Profiler;
 
 /**
- * QafooLabs Profiler
+ * Tideways
  *
  * LICENSE
  *
@@ -23,19 +23,44 @@ interface Backend
     public function storeMeasurement(array $data);
     public function storeError(array $data);
 }
+/**
+ * Tideways
+ *
+ * LICENSE
+ *
+ * This source file is subject to the MIT license that is bundled
+ * with this package in the file LICENSE.txt.
+ * If you did not receive a copy of the license and are unable to
+ * obtain it through the world-wide-web, please send an email
+ * to kontakt@beberlei.de so I can send you a copy immediately.
+ */
 
 
 class CurlBackend implements Backend
 {
+    const API_HOSTNAME = 'app.tideways.io';
+
     private $certificationFile;
     private $connectionTimeout;
     private $timeout;
+    private $proxy;
 
     public function __construct($certificationFile = null, $connectionTimeout = 3, $timeout = 3)
     {
         $this->certificationFile = $certificationFile;
         $this->connectionTimeout = $connectionTimeout;
         $this->timeout = $timeout;
+        $this->proxy = $this->detectProxySettings();
+    }
+
+    public function setProxy($proxy)
+    {
+        $this->proxy = $proxy;
+    }
+
+    public function getProxy()
+    {
+        return $this->proxy;
     }
 
     public function storeProfile(array $data)
@@ -47,7 +72,7 @@ class CurlBackend implements Backend
         $data['server'] = gethostname();
 
         $this->request(
-            "https://profiler.qafoolabs.com/api/profile/create",
+            "https://app.tideways.io/api/profile/create",
             $data,
             $data['apiKey'],
             $data['op']
@@ -56,7 +81,7 @@ class CurlBackend implements Backend
 
     public function storeMeasurement(array $data)
     {
-        $this->request("https://profiler.qafoolabs.com/api/performance", array(
+        $this->request("https://app.tideways.io/api/performance", array(
             'server' => gethostname(),
             'time' => time(),
             'apps' => array(
@@ -100,9 +125,13 @@ class CurlBackend implements Backend
             curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
         }
 
+        if ($this->proxy) {
+            curl_setopt($ch, CURLOPT_PROXY, $this->proxy);
+        }
+
         $headers = array(
             "Content-Type: application/json+gzip",
-            "User-Agent: QafooLabs Profiler Collector DevMode"
+            "User-Agent: Tideways Collector DevMode"
         );
 
         if ($apiKey) {
@@ -118,12 +147,29 @@ class CurlBackend implements Backend
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
 
         if (curl_exec($ch) === false) {
-            syslog(LOG_WARNING, "Qafoo Profiler DevMode cURL failed: " . curl_error($ch));
+            syslog(LOG_WARNING, "Tideways DevMode cURL failed: " . curl_error($ch));
         }
+    }
+
+    private function detectProxySettings()
+    {
+        $proxy = getenv('https_proxy') ?: getenv('http_proxy');
+        if (!$proxy) {
+            return null;
+        }
+
+        $noProxy = explode(',', getenv('no_proxy'));
+        foreach ($noProxy as $current) {
+            if ($current === self::API_HOSTNAME || (substr($current, 0, 1) === '.' && substr(self::API_HOSTNAME, -strlen($current)) === $current)) {
+                return null;
+            }
+        }
+
+        return $proxy;
     }
 }
 /**
- * QafooLabs Profiler
+ * Tideways
  *
  * LICENSE
  *
@@ -197,7 +243,7 @@ class NetworkBackend implements Backend
     }
 }
 /**
- * Qafoo Profiler Client
+ * Tideways
  *
  * LICENSE
  *
@@ -245,7 +291,7 @@ class SqlAnonymizer
     }
 }
 /**
- * QafooLabs Profiler
+ * Tideways
  *
  * LICENSE
  *
@@ -256,10 +302,10 @@ class SqlAnonymizer
  * to kontakt@beberlei.de so I can send you a copy immediately.
  */
 
-namespace QafooLabs;
+namespace Tideways;
 
 /**
- * QafooLabs Profiler PHP API
+ * Tideways PHP API
  *
  * Contains all methods to gather measurements and profile data with
  * Xhprof and send to local Profiler Collector Daemon.
@@ -270,32 +316,32 @@ namespace QafooLabs;
  *
  * @example
  *
- *      QafooLabs\Profiler::start($apiKey);
- *      QafooLabs\Profiler::setTransactionName("my tx name");
+ *      Tideways\Profiler::start($apiKey);
+ *      Tideways\Profiler::setTransactionName("my tx name");
  *
  * Calling the {@link stop()} method is not necessary as it is
  * called automatically from a shutdown handler, if you are timing
  * worker processes however it is necessary:
  *
- *      QafooLabs\Profiler::stop();
+ *      Tideways\Profiler::stop();
  *
  * The method {@link setTransactionName} is required, failing to call
  * it will result in discarding of the data. You can automatically
  * guess a name using the following snippet:
  *
- *      QafooLabs\Profiler::useRequestAsTransactionName();
+ *      Tideways\Profiler::useRequestAsTransactionName();
  *
  * If you want to collect custom timing data you can use for SQL:
  *
  *      $sql = "SELECT 1";
- *      $id = QafooLabs\Profiler::startSqlCustomTimer($sql);
+ *      $id = Tideways\Profiler::startSqlCustomTimer($sql);
  *      mysql_query($sql);
- *      QafooLabs\Profiler::stopCustomTimer($id);
+ *      Tideways\Profiler::stopCustomTimer($id);
  *
  * Or for any other timing data:
  *
- *      $id = QafooLabs\Profiler::startCustomTimer('solr', 'q=foo');
- *      QafooLabs\Profiler::stopCustomTimer($id);
+ *      $id = Tideways\Profiler::startCustomTimer('solr', 'q=foo');
+ *      Tideways\Profiler::stopCustomTimer($id);
  */
 class Profiler
 {
@@ -344,12 +390,12 @@ class Profiler
             'Twig_Template::render',
         );
 
-        if (version_compare(phpversion("qafooprofiler"), "1.2.2") >= 0) {
+        if (version_compare(phpversion("tideways"), "1.2.2") >= 0) {
             $argumentFunctions[] = 'Smarty::fetch';
             $argumentFunctions[] = 'Smarty_Internal_TemplateBase::fetch';
         }
 
-        if (version_compare(phpversion("qafooprofiler"), "1.3.0") >= 0) {
+        if (version_compare(phpversion("tideways"), "1.3.0") >= 0) {
             $argumentFunctions[] = 'Symfony\\Component\\EventDispatcher\\EventDispatcher::dispatch';
             $argumentFunctions[] = 'Doctrine\\Common\\EventManager::dispatchEvent';
             $argumentFunctions[] = 'Enlight_Event_EventManager::filter';
@@ -401,13 +447,13 @@ class Profiler
     }
 
     /**
-     * Instruct Qafoo Profiler to automatically detect transaction names during profiling.
+     * Instruct Tideways Profiler to automatically detect transaction names during profiling.
      *
-     * @param string $framework one of the QafooLabs\Profiler::FRAMEWORK_* constants.
+     * @param string $framework one of the Tideways\Profiler::FRAMEWORK_* constants.
      */
     public static function detectFrameworkTransaction($framework)
     {
-        if (extension_loaded('qafooprofiler')) {
+        if (extension_loaded('tideways')) {
             self::$framework = $framework;
         }
     }
@@ -450,8 +496,8 @@ class Profiler
      *
      * 1. Second parameter $sampleRate to start() method.
      * 2. _qprofiler Query Parameter (string key is deprecated or array)
-     * 3. Cookie QAFOO_PROFILER_SESSION
-     * 4. QAFOOPROFILER_SAMPLERATE environment variable.
+     * 3. Cookie TIDEWAYS_SESSION
+     * 4. TIDEWAYS_SAMPLERATE environment variable.
      *
      * start() automatically invokes a register shutdown handler that stops and
      * transmits the profiling data to the local daemon for further processing.
@@ -469,10 +515,10 @@ class Profiler
             return;
         }
 
-        $configApiKey = isset($_SERVER['QAFOOPROFILER_APIKEY']) ? $_SERVER['QAFOOPROFILER_APIKEY'] : ini_get("qafooprofiler.api_key");
+        $configApiKey = isset($_SERVER['TIDEWAYS_APIKEY']) ? $_SERVER['TIDEWAYS_APIKEY'] : ini_get("tideways.api_key");
         $apiKey = $apiKey ?: $configApiKey;
 
-        $configSampleRate = isset($_SERVER['QAFOOPROFILER_SAMPLERATE']) ? intval($_SERVER['QAFOOPROFILER_SAMPLERATE']) : ini_get("qafooprofiler.sample_rate");
+        $configSampleRate = isset($_SERVER['TIDEWAYS_SAMPLERATE']) ? intval($_SERVER['TIDEWAYS_SAMPLERATE']) : ini_get("tideways.sample_rate");
         $sampleRate = $sampleRate ?: $configSampleRate;
 
         if (strlen((string)$apiKey) === 0) {
@@ -488,7 +534,7 @@ class Profiler
         self::$profiling = self::decideProfiling($sampleRate);
 
         if (self::$profiling == true) {
-            if (!isset($_SERVER['QAFOO_PROFILER_ENABLE_ARGUMENTS']) || $_SERVER['QAFOO_PROFILER_ENABLE_ARGUMENTS'] == true) {
+            if (!isset($_SERVER['TIDEWAYS_ENABLE_ARGUMENTS']) || $_SERVER['TIDEWAYS_ENABLE_ARGUMENTS'] == true) {
                 if (!isset($options['argument_functions'])) {
                     $options['argument_functions'] = self::getDefaultArgumentFunctions();
                 }
@@ -507,6 +553,7 @@ class Profiler
                     'array_reduce',
                     'array_walk',
                     'array_walk_recursive',
+                    'Symfony\Component\DependencyInjection\Container::get',
                 );
             }
 
@@ -519,7 +566,7 @@ class Profiler
             return;
         }
 
-        if (!isset($_SERVER['QAFOO_PROFILER_ENABLE_LAYERS']) || !$_SERVER['QAFOO_PROFILER_ENABLE_LAYERS']) {
+        if (!isset($_SERVER['TIDEWAYS_ENABLE_LAYERS']) || !$_SERVER['TIDEWAYS_ENABLE_LAYERS']) {
             $options['layers'] = array();
         } else if (!isset($options['layers'])) {
             $options['layers'] = self::getDefaultLayerFunctions();
@@ -529,7 +576,7 @@ class Profiler
             return;
         }
 
-        qafooprofiler_layers_enable($options['layers'], self::$framework);
+        tideways_layers_enable($options['layers'], self::$framework);
 
         self::$sampling = true;
     }
@@ -549,17 +596,17 @@ class Profiler
 
         $vars = array();
 
-        if (isset($_SERVER['HTTP_X_QAFOO_PROFILER']) && is_string($_SERVER['HTTP_X_QAFOO_PROFILER'])) {
-            parse_str($_SERVER['HTTP_X_QAFOO_PROFILER'], $vars);
-        } else if (isset($_SERVER['QAFOO_PROFILER_SESSION']) && is_string($_SERVER['QAFOO_PROFILER_SESSION'])) {
-            parse_str($_SERVER['QAFOO_PROFILER_SESSION'], $vars);
-        } else if (isset($_COOKIE['QAFOO_PROFILER_SESSION']) && is_string($_COOKIE['QAFOO_PROFILER_SESSION'])) {
-            parse_str($_COOKIE['QAFOO_PROFILER_SESSION'], $vars);
+        if (isset($_SERVER['HTTP_X_TIDEWAYS_PROFILER']) && is_string($_SERVER['HTTP_X_TIDEWAYS_PROFILER'])) {
+            parse_str($_SERVER['HTTP_X_TIDEWAYS_PROFILER'], $vars);
+        } else if (isset($_SERVER['TIDEWAYS_SESSION']) && is_string($_SERVER['TIDEWAYS_SESSION'])) {
+            parse_str($_SERVER['TIDEWAYS_SESSION'], $vars);
+        } else if (isset($_COOKIE['TIDEWAYS_SESSION']) && is_string($_COOKIE['TIDEWAYS_SESSION'])) {
+            parse_str($_COOKIE['TIDEWAYS_SESSION'], $vars);
         } else if (isset($_GET['_qprofiler']) && is_array($_GET['_qprofiler'])) {
             $vars = $_GET['_qprofiler'];
         }
 
-        if (isset($_SERVER['QAFOO_PROFILER_DISABLE_SESSIONS']) && $_SERVER['QAFOO_PROFILER_DISABLE_SESSIONS']) {
+        if (isset($_SERVER['TIDEWAYS_DISABLE_SESSIONS']) && $_SERVER['TIDEWAYS_DISABLE_SESSIONS']) {
             $vars = array();
         }
 
@@ -603,14 +650,14 @@ class Profiler
     private static function init($apiKey)
     {
         if (self::$shutdownRegistered == false) {
-            register_shutdown_function(array("QafooLabs\\Profiler", "shutdown"));
+            register_shutdown_function(array("Tideways\\Profiler", "shutdown"));
             self::$shutdownRegistered = true;
         }
 
         if (self::$backend === null) {
             self::$backend = new Profiler\NetworkBackend(
-                ini_get('qafooprofiler.connection') ?: 'unix:///tmp/qprofd.sock',
-                ini_get('qafooprofiler.udp_connection') ?: '127.0.0.1:8135'
+                ini_get('tideways.connection') ?: 'unix:///var/run/tideways/tidewaysd.sock',
+                ini_get('tideways.udp_connection') ?: '127.0.0.1:8135'
             );
         }
 
@@ -625,13 +672,13 @@ class Profiler
         self::$started = microtime(true);
         self::$uid = null;
 
-        if (function_exists('qafooprofiler_enable')) {
-            $version = phpversion('qafooprofiler');
+        if (function_exists('tideways_enable')) {
+            $version = phpversion('tideways');
 
-            self::$extensionPrefix = 'qafooprofiler';
+            self::$extensionPrefix = 'tideways';
             self::$extensionFlags = (self::EXT_EXCEPTION | self::EXT_FATAL | self::EXT_TRANSACTION_NAME);
             self::$extensionFlags |= (version_compare($version, "1.2.2") >= 0) ? self::EXT_LAYERS : 0;
-            self::$customVars['xhpv'] = 'qp-' . $version;
+            self::$customVars['xhpv'] = 'tw-' . $version;
         } else if (function_exists('xhprof_enable')) {
             self::$extensionPrefix = 'xhprof';
             self::$customVars['xhpv'] = 'xhp-' . phpversion('xhprof');
@@ -701,7 +748,7 @@ class Profiler
      *
      * Data passed as description it not anonymized. It is your responsibility to
      * strip the data of any input that might cause private data to be sent to
-     * Qafoo Profiler service.
+     * Tideways service.
      *
      * @param string $group
      * @param string $description
@@ -802,7 +849,7 @@ class Profiler
         $sampling = self::$sampling;
 
         if (self::$operationName === 'default' && (self::$extensionFlags & self::EXT_TRANSACTION_NAME) > 0) {
-            self::$operationName = qafooprofiler_transaction_name() ?: 'default';
+            self::$operationName = tideways_transaction_name() ?: 'default';
         }
 
         if (self::$sampling || self::$profiling) {
@@ -851,19 +898,28 @@ class Profiler
         );
     }
 
+    public static function setDefaultCustomVariables()
+    {
+        if (isset($_SERVER['REQUEST_METHOD']) && !isset(self::$customVars['method'])) {
+            self::$customVars['method'] = $_SERVER["REQUEST_METHOD"];
+        }
+
+        if (isset($_SERVER['REQUEST_URI']) && !isset(self::$customVars['url'])) {
+            if (isset($_SERVER['HTTP_HOST'])) {
+                self::$customVars['url'] = (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . self::getRequestUri();
+            } elseif(isset($_SERVER['SERVER_ADDR'])) {
+                self::$customVars['url'] = (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['SERVER_ADDR'] . self::getRequestUri();
+            }
+        }
+    }
+
     private static function storeProfile($operationName, $data, $customTimers)
     {
         if (!isset($data["main()"]["wt"]) || !$data["main()"]["wt"]) {
             return;
         }
 
-        if (isset($_SERVER['REQUEST_METHOD']) && !isset(self::$customVars['method'])) {
-            self::$customVars['method'] = $_SERVER["REQUEST_METHOD"];
-        }
-
-        if (isset($_SERVER['REQUEST_URI']) && !isset(self::$customVars['url'])) {
-            self::$customVars['url'] = (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . self::getRequestUri();
-        }
+        self::setDefaultCustomVariables();
 
         self::$backend->storeProfile(array(
             "uid" => self::getProfileTraceUuid(),
@@ -1055,29 +1111,51 @@ class Profiler
         }
 
         return sprintf(
-            '<div id="QafooLabs-Profiler-Profile-Id" data-trace-id="%s" style="display:none !important;" aria-hidden="true"></div>',
+            '<div id="Tideways-Profiler-Profile-Id" data-trace-id="%s" style="display:none !important;" aria-hidden="true"></div>',
             self::getProfileTraceUuid()
         );
     }
 }
+/**
+ * Tidways Profiler
+ *
+ * LICENSE
+ *
+ * This source file is subject to the MIT license that is bundled
+ * with this package in the file LICENSE.txt.
+ * If you did not receive a copy of the license and are unable to
+ * obtain it through the world-wide-web, please send an email
+ * to kontakt@beberlei.de so I can send you a copy immediately.
+ */
+
+namespace QafooLabs;
+
+/**
+ * Backwards compatibility layer
+ *
+ * @deprecated use \Tideways\Profiler instead.
+ */
+class Profiler extends \Tideways\Profiler
+{
+}
 
 /** Check for auto starting the Profiler in Web and CLI (via Env Variable) */
-if (ini_get("qafooprofiler.auto_start") || isset($_SERVER['QAFOOPROFILER_AUTO_START'])) {
+if (ini_get("tideways.auto_start") || isset($_SERVER['TIDEWAYS_AUTO_START'])) {
     if (php_sapi_name() !== "cli") {
         /**
          * In Web context we auto start with the framework transaction name
          * configured in INI or ENV variable.
          */
-        if (ini_get("qafooprofiler.transaction_name")) {
-            \QafooLabs\Profiler::detectFrameworkTransaction(ini_get("qafooprofiler.transaction_name"));
-        } else if (isset($_SERVER['QAFOOPROFILER_TRANSACTION_NAME'])) {
-            \QafooLabs\Profiler::detectFrameworkTransaction($_SERVER['QAFOOPROFILER_TRANSACTION_NAME']);
+        if (ini_get("tideways.transaction_function")) {
+            \Tideways\Profiler::detectFrameworkTransaction(ini_get("tideways.transaction_function"));
+        } else if (isset($_SERVER['TIDEWAYS_TRANSACTION_NAME'])) {
+            \Tideways\Profiler::detectFrameworkTransaction($_SERVER['TIDEWAYS_TRANSACTION_NAME']);
         }
-        \QafooLabs\Profiler::start();
-    } else if (php_sapi_name() === "cli" && !empty($_SERVER['QAFOO_PROFILER_START'])) {
-        \QafooLabs\Profiler::startDevelopment();
+        \Tideways\Profiler::start();
+    } else if (php_sapi_name() === "cli" && !empty($_SERVER['TIDEWAYS_START'])) {
+        \Tideways\Profiler::startDevelopment();
 
         $transactionName = "cli:" . basename($argv[0]);
-        \QafooLabs\Profiler::setTransactionName($transactionName);
+        \Tideways\Profiler::setTransactionName($transactionName);
     }
 }
