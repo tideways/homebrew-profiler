@@ -19,6 +19,7 @@ class AbstractTidewaysPhpExtension < Formula
   homepage 'https://github.com/tideways/php-profiler-extension'
   head 'https://github.com/tideways/php-profiler-extension.git'
   version 'v1.4.0'
+  url 'https://github.com/qafoolabs/php-profiler-extension/archive/v1.4.0.tar.gz'
 
   depends_on 'pcre'
   depends_on 'curl'
