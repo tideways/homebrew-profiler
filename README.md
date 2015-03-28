@@ -1,37 +1,37 @@
-# Homebrew Formulas for Qafoo Profiler
+# Homebrew Formulas for Tideways Profiler
 
-With this repository you can install the Qafoo Profiler Daemon, Commandline-Tool and PHP Extension via Homebrew.
+With this repository you can install the Tideways Profiler Daemon, Commandline-Tool and PHP Extension via Homebrew.
 
 Requirements: [homebrew-php](https://github.com/Homebrew/homebrew-php)
 
 1. Tap this repository
 
-	    brew tap qafoolabs/homebrew-profiler
+	    brew tap tideways/homebrew-profiler
 
 2. a.) Install PHP Extension (if you have `homebrew-php`)
 
-	    brew install php53-qafooprofiler
-	    brew install php54-qafooprofiler
-	    brew install php55-qafooprofiler
-	    brew install php56-qafooprofiler
+	    brew install php53-tideways
+	    brew install php54-tideways
+	    brew install php55-tideways
+	    brew install php56-tideways
 
 2. b.) Install PHP using System PHP
 
-        brew install php54-qafooprofiler --without-homebrew-php
+        brew install php54-tideways --without-homebrew-php
 
 3. Install Daemon
 
-	    brew install qafooprofiler-daemon
+	    brew install tideways-daemon
 
 4. Install Commandline Tool
 
-	    brew install qafooprofiler-cli
+	    brew install tideways-cli
 
 ## Feedback: Help us improve Installation
 
 If using this homebrew recipe is at any point complicated for you or not
 intuitive that is our mistake. Please help us improve installation by sending
-notes to support@profiler.qafoolabs.com
+notes to [support@tideways.io](mailto:support@tideways.io).
 
 ## Acknowledgements
 

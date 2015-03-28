@@ -15,7 +15,30 @@ class InvalidPhpizeError < RuntimeError
   end
 end
 
-class AbstractQafooPhpExtension < Formula
+class AbstractTidewaysPhpExtension < Formula
+  homepage 'https://github.com/tideways/php-profiler-extension'
+  head 'https://github.com/tideways/php-profiler-extension.git'
+  version 'v1.4.0'
+
+  depends_on 'pcre'
+  depends_on 'curl'
+
+  def install
+    ENV.universal_binary if build.universal?
+
+    safe_phpize
+    system "./configure", "--prefix=#{prefix}",
+    phpconfig
+    system "make"
+    prefix.install "modules/tideways.so"
+
+    extension_dir = `php-config --extension-dir`.strip!
+    qp = File.expand_path("../../Files/Tideways.php", __FILE__)
+    FileUtils.copy_file(qp, extension_dir + "/Tideways.php")
+
+    write_config_file if build.with? "config-file"
+  end
+
   def initialize(*)
     super
 
@@ -112,6 +135,8 @@ class AbstractQafooPhpExtension < Formula
       <<-EOS.undent
       [#{extension}]
       #{extension_type}="#{module_path}"
+      tideways.connection=unix://#{var}/run/tidewaysd.sock
+      tideways.load_library=0
       EOS
     rescue Exception
       nil
@@ -172,33 +197,5 @@ EOS
       config_scandir_path.mkpath
       config_filepath.write(config_file)
     end
-  end
-end
-
-class AbstractQafooPhp53Extension < AbstractQafooPhpExtension
-  def self.init opts=[]
-    super()
-    depends_on "php53" => opts if build.with?('homebrew-php')
-  end
-end
-
-class AbstractQafooPhp54Extension < AbstractQafooPhpExtension
-  def self.init opts=[]
-    super()
-    depends_on "php54" => opts if build.with?('homebrew-php')
-  end
-end
-
-class AbstractQafooPhp55Extension < AbstractQafooPhpExtension
-  def self.init opts=[]
-    super()
-    depends_on "php55" => opts if build.with?('homebrew-php')
-  end
-end
-
-class AbstractQafooPhp56Extension < AbstractQafooPhpExtension
-  def self.init opts=[]
-    super()
-    depends_on "php56" => opts if build.with?('homebrew-php')
   end
 end

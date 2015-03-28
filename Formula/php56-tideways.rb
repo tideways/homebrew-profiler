@@ -1,0 +1,10 @@
+require File.expand_path("../../Abstract/abstract-tideways-php-extension", __FILE__)
+
+class Php56Tidewaysprofiler < AbstractTidewaysPhpExtension
+  def self.init opts=[]
+    super()
+    depends_on "php56" => opts if build.with?('homebrew-php')
+  end
+
+  init
+end
