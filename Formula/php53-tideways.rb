@@ -1,4 +1,4 @@
-require File.expand_path("../../Abstract/abstract-tideways-php-extension", __FILE__)
+require File.expand_path("../../Abstract/abstract-tideways-php-extension.rb", __FILE__)
 
 class Php53Tidewaysprofiler < AbstractTidewaysPhpExtension
   def self.init opts=[]
