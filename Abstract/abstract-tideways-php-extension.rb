@@ -26,6 +26,9 @@ class AbstractTidewaysPhpExtension < Formula
     prefix.install "modules/tideways.so"
 
     extension_dir = `#{Formula[php_formula].opt_bin}/php-config --extension-dir`.strip!
+    # Create extension dir if not exists (because homebrew-php saves into different folder)
+    FileUtils.mkdir_p extension_dir
+
     qp = File.expand_path("../../Files/Tideways.php", __FILE__)
     FileUtils.copy_file(qp, extension_dir + "/Tideways.php")
 
