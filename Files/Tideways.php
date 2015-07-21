@@ -1,6 +1,4 @@
 <?php
-namespace Tideways\Profiler;
-
 /**
  * Tideways
  *
@@ -13,15 +11,330 @@ namespace Tideways\Profiler;
  * to kontakt@beberlei.de so I can send you a copy immediately.
  */
 
+namespace Tideways\Traces;
+
+/**
+ * Abstraction for trace spans.
+ *
+ * Different implementations based on support
+ */
+abstract class Span
+{
+    /**
+     * Create Child span
+     * @private
+     */
+    abstract public function createSpan($name = null);
+
+    /**
+     * @private
+     * @return array
+     */
+    abstract public function getSpans();
+
+    /**
+     * 32/64 bit random integer.
+     *
+     * @return int
+     */
+    public abstract function getId();
+
+    /**
+     * Record start of timer in microseconds.
+     *
+     * If timer is already running, don't record another start.
+     */
+    public abstract function startTimer();
+
+    /**
+     * Record stop of timer in microseconds.
+     *
+     * If timer is not running, don't record.
+     */
+    public abstract function stopTimer();
+
+    /**
+     * Annotate span with metadata.
+     *
+     * @param array<string,scalar>
+     */
+    public abstract function annotate(array $annotations);
+}
+
+namespace Tideways\Traces;
+
+class NullSpan extends Span
+{
+    public function createSpan($name = null)
+    {
+        return $this;
+    }
+
+    public function getSpans()
+    {
+        return array();
+    }
+
+    public function getId()
+    {
+        return 0;
+    }
+
+    /**
+     * Record start of timer in microseconds.
+     *
+     * If timer is already running, don't record another start.
+     */
+    public function startTimer()
+    {
+    }
+
+    /**
+     * Record stop of timer in microseconds.
+     *
+     * If timer is not running, don't record.
+     */
+    public function stopTimer()
+    {
+    }
+
+    /**
+     * Annotate span with metadata.
+     *
+     * @param array<string,scalar>
+     */
+    public function annotate(array $annotations)
+    {
+    }
+}
+/**
+ * Tideways
+ *
+ * LICENSE
+ *
+ * This source file is subject to the MIT license that is bundled
+ * with this package in the file LICENSE.txt.
+ * If you did not receive a copy of the license and are unable to
+ * obtain it through the world-wide-web, please send an email
+ * to kontakt@beberlei.de so I can send you a copy immediately.
+ */
+
+namespace Tideways\Traces;
+
+use Tideways\Profiler;
+
+/**
+ * When Tideways PHP extension is not installed the span API
+ * is handled in memory.
+ */
+class PhpSpan extends Span
+{
+    const ID = 'i';
+    const NAME = 'n';
+    const STARTS = 'b';
+    const STOPS = 'e';
+    const ANNOTATIONS = 'a';
+
+    /**
+     * @var array
+     */
+    private static $spans = array();
+    private static $startTime = false;
+
+    /**
+     * @var bool
+     */
+    private $timerRunning = false;
+
+    /**
+     * @var int
+     */
+    private $idx;
+
+    static public function clear()
+    {
+        self::$spans = array();
+        self::$startTime = microtime(true);
+    }
+
+    public function createSpan($name = null)
+    {
+        $idx = count(self::$spans);
+        return new self($idx, $name);
+    }
+
+    /**
+     * @return int
+     */
+    private static function currentDuration()
+    {
+        return intval(round((microtime(true) - self::$startTime) * 1000000));
+    }
+
+    public function getSpans()
+    {
+        return self::$spans;
+    }
+
+    public function __construct($idx, $name = null)
+    {
+        $this->idx = $idx;
+        self::$spans[$idx] = array(
+            self::STARTS => array(),
+            self::STOPS => array(),
+            self::ANNOTATIONS => array(),
+        );
+        if ($name) {
+            self::$spans[$idx][self::NAME] = $name;
+        }
+    }
+
+    public function getId()
+    {
+        if (!isset(self::$spans[$this->idx][self::ID])) {
+            self::$spans[$this->idx][self::ID] = \Tideways\Profiler::generateRandomId();
+        }
+
+        return self::$spans[$this->idx][self::ID];
+    }
+
+    public function startTimer()
+    {
+        if ($this->timerRunning) {
+            return;
+        }
+
+        self::$spans[$this->idx][self::STARTS][] = self::currentDuration();
+        $this->timerRunning = true;
+    }
+
+    public function stopTimer()
+    {
+        if (!$this->timerRunning) {
+            return;
+        }
+
+        self::$spans[$this->idx][self::STOPS][] = self::currentDuration();
+        $this->timerRunning = false;
+    }
+
+    public function annotate(array $annotations)
+    {
+        foreach ($annotations as $name => $value) {
+            if (!is_scalar($value)) {
+                continue;
+            }
+
+            self::$spans[$this->idx][self::ANNOTATIONS][$name] = (string)$value;
+        }
+    }
+}
+
+namespace Tideways\Traces;
+
+class TwExtensionSpan extends Span
+{
+    /**
+     * @var int
+     */
+    private $idx;
+
+    public function createSpan($name = null)
+    {
+        return new self(tideways_span_create($name));
+    }
+
+    public function getSpans()
+    {
+        return tideways_get_spans();
+    }
+
+    public function __construct($idx)
+    {
+        $this->idx = $idx;
+    }
+
+    /**
+     * 32/64 bit random integer.
+     *
+     * @return int
+     */
+    public function getId()
+    {
+        return $this->idx;
+    }
+
+    /**
+     * Record start of timer in microseconds.
+     *
+     * If timer is already running, don't record another start.
+     */
+    public function startTimer()
+    {
+        tideways_span_timer_start($this->idx);
+    }
+
+    /**
+     * Record stop of timer in microseconds.
+     *
+     * If timer is not running, don't record.
+     */
+    public function stopTimer()
+    {
+        tideways_span_timer_stop($this->idx);
+    }
+
+    /**
+     * Annotate span with metadata.
+     *
+     * @param array<string,scalar>
+     */
+    public function annotate(array $annotations)
+    {
+        tideways_span_annotate($this->idx, $annotations);
+    }
+}
+
+namespace Tideways\Traces;
+
+class DistributedId
+{
+    public $rootTraceId;
+    public $parentTraceId;
+    public $parentSpanId;
+
+    public function __construct($parentSpanId, $parentTraceId, $rootTraceId = null)
+    {
+        if (!is_int($parentSpanId) || !is_int($parentTraceId) || ($rootTraceId !== null && !is_int($rootTraceId))) {
+            throw new \InvalidArgumentException("DistributedId must consist of integer values.");
+        }
+
+        $this->parentTraceId = $parentTraceId;
+        $this->parentSpanId = $parentSpanId;
+        $this->rootTraceId = $rootTraceId ?: $parentTraceId;
+    }
+}
+/**
+ * Tideways
+ *
+ * LICENSE
+ *
+ * This source file is subject to the MIT license that is bundled
+ * with this package in the file LICENSE.txt.
+ * If you did not receive a copy of the license and are unable to
+ * obtain it through the world-wide-web, please send an email
+ * to kontakt@beberlei.de so I can send you a copy immediately.
+ */
+
+namespace Tideways\Profiler;
 
 /**
  * Low-level abstraction for storage of profiling data.
  */
 interface Backend
 {
-    public function storeProfile(array $data);
-    public function storeMeasurement(array $data);
-    public function storeError(array $data);
+    public function socketStore(array $trace);
+    public function udpStore(array $trace);
 }
 /**
  * Tideways
@@ -35,177 +348,41 @@ interface Backend
  * to kontakt@beberlei.de so I can send you a copy immediately.
  */
 
-
-class CurlBackend implements Backend
-{
-    const API_HOSTNAME = 'app.tideways.io';
-
-    private $certificationFile;
-    private $connectionTimeout;
-    private $timeout;
-    private $proxy;
-
-    public function __construct($certificationFile = null, $connectionTimeout = 3, $timeout = 3)
-    {
-        $this->certificationFile = $certificationFile;
-        $this->connectionTimeout = $connectionTimeout;
-        $this->timeout = $timeout;
-        $this->proxy = $this->detectProxySettings();
-    }
-
-    public function setProxy($proxy)
-    {
-        $this->proxy = $proxy;
-    }
-
-    public function getProxy()
-    {
-        return $this->proxy;
-    }
-
-    public function storeProfile(array $data)
-    {
-        if (function_exists("curl_init") === false) {
-            return;
-        }
-
-        $data['server'] = gethostname();
-
-        $this->request(
-            "https://app.tideways.io/api/profile/create",
-            $data,
-            $data['apiKey'],
-            $data['op']
-        );
-    }
-
-    public function storeMeasurement(array $data)
-    {
-        $this->request("https://app.tideways.io/api/performance", array(
-            'server' => gethostname(),
-            'time' => time(),
-            'apps' => array(
-                $data['apiKey'] => array(
-                    'operations' => array(
-                        $data['op'] => array(
-                            'lastRev' => time()+84600,
-                            'cnt' => 1,
-                            'err' => 0,
-                            'wt' => array(
-                                array(
-                                    'wt' => $data['wt'],
-                                    'mem' => $data['mem'],
-                                    'c' => $data['c'],
-                                )
-                            )
-                        )
-                    )
-                )
-            )
-        ));
-    }
-
-    public function storeError(array $data)
-    {
-    }
-
-    private function request($url, $data, $apiKey = null, $operation = null)
-    {
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $this->connectionTimeout);
-        curl_setopt($ch, CURLOPT_TIMEOUT, $this->timeout);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-
-        if ($this->certificationFile) {
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
-            curl_setopt($ch, CURLOPT_CAINFO, $this->certificationFile);
-        } else {
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-        }
-
-        if ($this->proxy) {
-            curl_setopt($ch, CURLOPT_PROXY, $this->proxy);
-        }
-
-        $headers = array(
-            "Content-Type: application/json+gzip",
-            "User-Agent: Tideways Collector DevMode"
-        );
-
-        if ($apiKey) {
-            $headers[] = 'X-Profiler-Key: ' . $apiKey;
-        }
-        if ($operation) {
-            $headers[] = 'X-Profiler-Op: ' . $operation;
-        }
-
-        curl_setopt($ch, CURLOPT_FAILONERROR,true);
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
-        curl_setopt($ch, CURLOPT_POSTFIELDS, gzencode(json_encode($data)));
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-
-        if (curl_exec($ch) === false) {
-            syslog(LOG_WARNING, "Tideways DevMode cURL failed: " . curl_error($ch));
-        }
-    }
-
-    private function detectProxySettings()
-    {
-        $proxy = getenv('https_proxy') ?: getenv('http_proxy');
-        if (!$proxy) {
-            return null;
-        }
-
-        $noProxy = explode(',', getenv('no_proxy'));
-        foreach ($noProxy as $current) {
-            if ($current === self::API_HOSTNAME || (substr($current, 0, 1) === '.' && substr(self::API_HOSTNAME, -strlen($current)) === $current)) {
-                return null;
-            }
-        }
-
-        return $proxy;
-    }
-}
-/**
- * Tideways
- *
- * LICENSE
- *
- * This source file is subject to the MIT license that is bundled
- * with this package in the file LICENSE.txt.
- * If you did not receive a copy of the license and are unable to
- * obtain it through the world-wide-web, please send an email
- * to kontakt@beberlei.de so I can send you a copy immediately.
- */
-
+namespace Tideways\Profiler;
 
 class NetworkBackend implements Backend
 {
+    /**
+     * Old v1 type profile format.
+     *
+     * @var string
+     */
     const TYPE_PROFILE = 'profile';
-    const TYPE_ERROR = 'error';
+    /**
+     * v2 type traces
+     */
+    const TYPE_TRACE = 'trace';
 
     private $socketFile;
     private $udp;
 
-    public function __construct($socketFile = "unix:///tmp/qprofd.sock", $udp = "127.0.0.1:8135")
+    public function __construct($socketFile = "unix:///var/run/tideways/tidewaysd.sock", $udp = "127.0.0.1:8135")
     {
         $this->socketFile = $socketFile;
         $this->udp = $udp;
     }
 
+    /**
+     * To avoid user apps messing up socket errors that Tideways can produce
+     * when the daemon is not reachable, this error handler is used
+     * wrapped around daemons to guard user apps from erroring.
+     */
     public static function ignoreErrorsHandler($errno, $errstr, $errfile, $errline)
     {
         // ignore all errors!
     }
 
-    public function storeProfile(array $data)
-    {
-        $this->storeThroughFileSocket(self::TYPE_PROFILE, $data);
-    }
-
-    private function storeThroughFileSocket($dataType, array $data)
+    public function socketStore(array $trace)
     {
         set_error_handler(array(__CLASS__, "ignoreErrorsHandler"));
         $fp = stream_socket_client($this->socketFile);
@@ -216,12 +393,12 @@ class NetworkBackend implements Backend
         }
 
         stream_set_timeout($fp, 0, 10000); // 10 milliseconds max
-        fwrite($fp, json_encode(array('type' => $dataType, 'payload' => $data)));
+        fwrite($fp, json_encode(array('type' => self::TYPE_TRACE, 'payload' => $trace)));
         fclose($fp);
         restore_error_handler();
     }
 
-    public function storeMeasurement(array $data)
+    public function udpStore(array $trace)
     {
         set_error_handler(array(__CLASS__, "ignoreErrorsHandler"));
         $fp = stream_socket_client("udp://" . $this->udp);
@@ -231,19 +408,18 @@ class NetworkBackend implements Backend
             return;
         }
 
+        $payload = json_encode($trace);
+        // Golang is very strict about json types.
+        $payload = str_replace('"a":[]', '"a":{}', $payload);
+
         stream_set_timeout($fp, 0, 200);
-        fwrite($fp, json_encode($data, JSON_FORCE_OBJECT));
+        fwrite($fp, $payload);
         fclose($fp);
         restore_error_handler();
     }
-
-    public function storeError(array $data)
-    {
-        $this->storeThroughFileSocket(self::TYPE_ERROR, $data);
-    }
 }
 /**
- * Tideways
+ * Tideways Profiler PHP Library
  *
  * LICENSE
  *
@@ -254,40 +430,50 @@ class NetworkBackend implements Backend
  * to kontakt@beberlei.de so I can send you a copy immediately.
  */
 
+namespace Tideways\Profiler;
 
 /**
- * Anonymize SQL statements.
- *
- * To avoid passing private data to the profiler services you have to anonymize
- * SQL statements that are collected as custom timers.
- *
- * The class detects all strings and numbers in sql statements and replaces
- * them with question marks (?).
- *
- * If your library such as Doctrine DBAL only uses prepared statements anyways
- * and you don't put user input into SQL yourself, then you can skip this step.
- *
- * @TODO: Rename to something more meaningful, since it also anonymizes messages.
+ * Convert a Backtrace to a String like {@see Exception::getTraceAsString()} would do.
  */
-class SqlAnonymizer
+class BacktraceConverter
 {
-    /**
-     * @var string
-     */
-    const SPLIT_NUMBERS_AND_QUOTED_STRINGS = '(("[^"]+"|\'[^\']+\'|([0-9]*\.)?[0-9]+))';
-
-    /**
-     * Anonymize SQL string.
-     *
-     * Splits a SQL at quoted literals and numbers, replacing them with
-     * question marks for anonymization.
-     *
-     * @param string $sql
-     * @return string
-     */
-    static public function anonymize($sql)
+    static public function convertToString(array $backtrace)
     {
-        return preg_replace(self::SPLIT_NUMBERS_AND_QUOTED_STRINGS, '?', $sql);
+        $trace = '';
+
+        foreach ($backtrace as $k => $v) {
+            if (!isset($v['function'])) {
+                continue;
+            }
+
+            if (!isset($v['file'])) {
+                $v['file'] = '';
+            }
+
+            if (!isset($v['line'])) {
+                $v['line'] = '';
+            }
+
+            $args = '';
+            if (isset($v['args'])) {
+                $args = implode(', ', array_map(function ($arg) {
+                    return (is_object($arg)) ? get_class($arg) : gettype($arg);
+                }, $v['args']));
+            }
+
+            $trace .= '#' . ($k) . ' ';
+            if (isset($v['file'])) {
+                $trace .= $v['file'] . '(' . $v['line'] . '): ';
+            }
+
+            if (isset($v['class'])) {
+                $trace .= $v['class'] . '->';
+            }
+
+            $trace .= $v['function'] . '(' . $args .')' . "\n";
+        }
+
+        return $trace;
     }
 }
 /**
@@ -303,6 +489,8 @@ class SqlAnonymizer
  */
 
 namespace Tideways;
+
+use Tideways\Traces\DistributedId;
 
 /**
  * Tideways PHP API
@@ -326,135 +514,154 @@ namespace Tideways;
  *      Tideways\Profiler::stop();
  *
  * The method {@link setTransactionName} is required, failing to call
- * it will result in discarding of the data. You can automatically
- * guess a name using the following snippet:
- *
- *      Tideways\Profiler::useRequestAsTransactionName();
- *
- * If you want to collect custom timing data you can use for SQL:
- *
- *      $sql = "SELECT 1";
- *      $id = Tideways\Profiler::startSqlCustomTimer($sql);
- *      mysql_query($sql);
- *      Tideways\Profiler::stopCustomTimer($id);
- *
- * Or for any other timing data:
- *
- *      $id = Tideways\Profiler::startCustomTimer('solr', 'q=foo');
- *      Tideways\Profiler::stopCustomTimer($id);
+ * it will result in discarding of the data.
  */
 class Profiler
 {
-    const VERSION = '1.3.5';
+    const VERSION = '2.0.5';
+
+    const MODE_NONE = 0;
+    const MODE_BASIC = 1;
+    const MODE_PROFILING = 2;
+    const MODE_TRACING = 4;
+    const MODE_FULL = 6;
+
+    const EXTENSION_NONE = 0;
+    const EXTENSION_XHPROF = 1;
+    const EXTENSION_TIDEWAYS = 2;
 
     const EXT_FATAL            = 1;
-    const EXT_LAYERS           = 2;
     const EXT_EXCEPTION        = 4;
     const EXT_TRANSACTION_NAME = 8;
 
-    const FRAMEWORK_ZEND_FRAMEWORK1 = 'Zend_Controller_Action::dispatch';
-    const FRAMEWORK_ZEND_FRAMEWORK2 = 'Zend\\MVC\\Controller\\ControllerManager::get';
-    const FRAMEWORK_SYMFONY2_COMPONENT = 'Symfony\Component\HttpKernel\Controller\ControllerResolver::createController';
-    const FRAMEWORK_SYMFONY2_FRAMEWORK = 'Symfony\Bundle\FrameworkBundle\Controller\ControllerResolver::createController';
-    const FRAMEWORK_OXID = 'oxView::setClassName';
-    const FRAMEWORK_SHOPWARE = 'Enlight_Controller_Action::dispatch';
-    const FRAMEWORK_WORDPRESS = 'get_query_template';
+    const FRAMEWORK_ZEND_FRAMEWORK1    = 'zend1';
+    const FRAMEWORK_ZEND_FRAMEWORK2    = 'zend2';
+    const FRAMEWORK_SYMFONY2_COMPONENT = 'symfony2c';
+    const FRAMEWORK_SYMFONY2_FRAMEWORK = 'symfony2';
+    const FRAMEWORK_OXID               = 'oxid';
+    const FRAMEWORK_SHOPWARE           = 'shopware';
+    const FRAMEWORK_WORDPRESS          = 'wordpress';
+    const FRAMEWORK_LARAVEL            = 'laravel';
+    const FRAMEWORK_MAGENTO            = 'magento';
 
-    private static $framework;
-    private static $apiKey;
-    private static $started = false;
+    /**
+     * Default XHProf/Tideways hierachical profiling options.
+     */
+    private static $defaultOptions = array(
+        'ignored_functions' => array(
+            'call_user_func',
+            'call_user_func_array',
+            'array_filter',
+            'array_map',
+            'array_reduce',
+            'array_walk',
+            'array_walk_recursive',
+            'Symfony\Component\DependencyInjection\Container::get',
+        ),
+        'transaction_function' => null,
+        'exception_function' => null,
+        'watches' => array(),
+        'callbacks' => array(),
+    );
+
+    private static $trace;
+    private static $currentRootSpan;
     private static $shutdownRegistered = false;
-    private static $operationName;
-    private static $customVars;
-    private static $customTimers;
-    private static $customTimerCount = 0;
-    private static $error;
-    private static $profiling = false;
-    private static $sampling = false;
-    private static $correlationId;
+    private static $error = false;
+    private static $mode = self::MODE_NONE;
     private static $backend;
-    private static $uid;
-    private static $extensionPrefix;
-    private static $extensionFlags = 0;
+    private static $extension = self::EXTENSION_NONE;
 
-    private static function getDefaultArgumentFunctions()
-    {
-        $argumentFunctions = array(
-            'PDOStatement::execute',
-            'PDO::exec',
-            'PDO::query',
-            'mysql_query',
-            'mysqli_query',
-            'mysqli::query',
-            'curl_exec',
-            'Twig_Template::render',
-        );
-
-        if (version_compare(phpversion("tideways"), "1.2.2") >= 0) {
-            $argumentFunctions[] = 'Smarty::fetch';
-            $argumentFunctions[] = 'Smarty_Internal_TemplateBase::fetch';
-        }
-
-        if (version_compare(phpversion("tideways"), "1.3.0") >= 0) {
-            $argumentFunctions[] = 'Symfony\\Component\\EventDispatcher\\EventDispatcher::dispatch';
-            $argumentFunctions[] = 'Doctrine\\Common\\EventManager::dispatchEvent';
-            $argumentFunctions[] = 'Enlight_Event_EventManager::filter';
-            $argumentFunctions[] = 'Enlight_Event_EventManager::notify';
-            $argumentFunctions[] = 'Enlight_Event_EventManager::notifyUntil';
-            $argumentFunctions[] = 'Zend\\EventManager\\EventManager::trigger';
-            $argumentFunctions[] = 'do_action';
-            $argumentFunctions[] = 'apply_filters';
-            $argumentFunctions[] = 'drupal_alter';
-            $argumentFunctions[] = 'Mage::dispatchEvent';
-        }
-
-        return $argumentFunctions;
-    }
-
-    private static function getDefaultLayerFunctions()
-    {
-        return array(
-            'PDO::__construct' => 'db',
-            'PDO::exec' => 'db',
-            'PDO::query' => 'db',
-            'PDO::commit' => 'db',
-            'PDOStatement::execute' => 'db',
-            'mysql_query' => 'db',
-            'mysqli_query' => 'db',
-            'mysqli::query' => 'db',
-            'curl_exec' => 'http',
-            'curl_multi_exec' => 'http',
-            'curl_multi_select' => 'http',
-            'file_get_contents' => 'io',
-            'file_put_contents' => 'io',
-            'fopen' => 'io',
-            'fsockopen' => 'io',
-            'fgets' => 'io',
-            'fputs' => 'io',
-            'fwrite' => 'io',
-            'file_exists' => 'io',
-            'MemcachePool::get' => 'cache',
-            'MemcachePool::set' => 'cache',
-            'Memcache::connect' => 'cache',
-            'apc_fetch' => 'cache',
-            'apc_store' => 'cache',
-        );
-    }
-
-    public static function setBackend(Profiler\Backend $backend)
+    public static function setBackend(Profiler\Backend $backend = null)
     {
         self::$backend = $backend;
+    }
+
+    public static function detectExceptionFunction($function)
+    {
+        self::$defaultOptions['exception_function'] = $function;
     }
 
     /**
      * Instruct Tideways Profiler to automatically detect transaction names during profiling.
      *
-     * @param string $framework one of the Tideways\Profiler::FRAMEWORK_* constants.
+     * @param string $function - A transaction function name
      */
-    public static function detectFrameworkTransaction($framework)
+    public static function detectFrameworkTransaction($function)
     {
-        if (extension_loaded('tideways')) {
-            self::$framework = $framework;
+        self::detectFramework($function);
+    }
+
+    /**
+     * Configure detecting framework transactions and ignoring unnecessary layer calls.
+     *
+     * If the framework is not from the list of known frameworks it is assumed to
+     * be a function name that is the transaction function.
+     *
+     * @param string $framework
+     */
+    public static function detectFramework($framework)
+    {
+        switch ($framework) {
+            case self::FRAMEWORK_ZEND_FRAMEWORK1:
+                self::$defaultOptions['transaction_function'] = 'Zend_Controller_Action::dispatch';
+                self::$defaultOptions['exception_function'] = 'Zend_Controller_Response_Abstract::setException';
+                break;
+
+            case self::FRAMEWORK_ZEND_FRAMEWORK2:
+                self::$defaultOptions['transaction_function'] = 'Zend\\MVC\\Controller\\ControllerManager::get';
+                break;
+
+            case self::FRAMEWORK_SYMFONY2_COMPONENT:
+                self::$defaultOptions['transaction_function'] = 'Symfony\Component\HttpKernel\Controller\ControllerResolver::createController';
+                self::$defaultOptions['exception_function'] = 'Symfony\Component\HttpKernel\HttpKernel::handleException';
+                break;
+
+            case self::FRAMEWORK_SYMFONY2_FRAMEWORK:
+                self::$defaultOptions['transaction_function'] = 'Symfony\Bundle\FrameworkBundle\Controller\ControllerResolver::createController';
+                self::$defaultOptions['exception_function'] = 'Symfony\Component\HttpKernel\HttpKernel::handleException';
+                break;
+
+            case self::FRAMEWORK_OXID:
+                self::$defaultOptions['transaction_function'] = 'oxView::setClassName';
+                self::$defaultOptions['exception_function'] = 'oxShopControl::_handleBaseException';
+                break;
+
+            case self::FRAMEWORK_SHOPWARE:
+                self::$defaultOptions['transaction_function'] = 'Enlight_Controller_Action::dispatch';
+                self::$defaultOptions['exception_function'] = 'Zend_Controller_Response_Abstract::setException';
+                break;
+
+            case self::FRAMEWORK_WORDPRESS:
+                self::$defaultOptions['transaction_function'] = 'get_query_template';
+                break;
+
+            case self::FRAMEWORK_LARAVEL:
+                self::$defaultOptions['transaction_function'] = 'Illuminate\Routing\Controller::callAction';
+                self::$defaultOptions['exception_function'] = 'Illuminate\Foundation\Http\Kernel::reportException';
+                break;
+
+            case self::FRAMEWORK_MAGENTO:
+                self::$defaultOptions['transaction_function'] = 'Mage_Core_Controller_Varien_Action::dispatch';
+                self::$defaultOptions['exception_function'] = 'Mage::printException';
+                break;
+
+            default:
+                self::$defaultOptions['transaction_function'] = $framework;
+                break;
+        }
+    }
+
+    /**
+     * Add more ignore functions to profiling options.
+     *
+     * @param array<string> $functionNames
+     * @return void
+     */
+    public static function addIgnoreFunctions(array $functionNames)
+    {
+        foreach ($functionNames as $functionName) {
+            self::$defaultOptions['ignored_functions'][] = $functionName;
         }
     }
 
@@ -470,10 +677,6 @@ class Profiler
     public static function startDevelopment($apiKey = null, array $options = array())
     {
         self::start($apiKey, 100, $options, 4);
-
-        if (!self::$correlationId) {
-            self::$correlationId = "dev-trace";
-        }
     }
 
     /**
@@ -502,96 +705,96 @@ class Profiler
      * start() automatically invokes a register shutdown handler that stops and
      * transmits the profiling data to the local daemon for further processing.
      *
-     * @param string            $apiKey Application key can be found in "Settings" tab of Profiler UI
-     * @param int               $sampleRate Sample rate in full percent (1= 1%, 20 = 20%). Defaults to every fifth request
-     * @param array             $options XHProf options.
-     * @param int               $flags
+     * @param array|string      $options Either options array or api key (when string)
+     * @param int               $sampleRate Deprecated, use "sample_rate" key in options instead.
      *
      * @return void
      */
-    public static function start($apiKey = null, $sampleRate = null, array $options = array(), $flags = 0)
+    public static function start($options = array(), $sampleRate = null)
     {
-        if (self::$started) {
+        if (self::$mode !== self::MODE_NONE) {
             return;
         }
 
-        $configApiKey = isset($_SERVER['TIDEWAYS_APIKEY']) ? $_SERVER['TIDEWAYS_APIKEY'] : ini_get("tideways.api_key");
-        $apiKey = $apiKey ?: $configApiKey;
+        if (!is_array($options)) {
+            $options = array('api_key' => $options);
+        }
+        if ($sampleRate !== null) {
+            $options['sample_rate'] = $sampleRate;
+        }
 
-        $configSampleRate = isset($_SERVER['TIDEWAYS_SAMPLERATE']) ? intval($_SERVER['TIDEWAYS_SAMPLERATE']) : ini_get("tideways.sample_rate");
-        $sampleRate = $sampleRate ?: $configSampleRate;
+        $defaults = array(
+            'api_key' => isset($_SERVER['TIDEWAYS_APIKEY']) ? $_SERVER['TIDEWAYS_APIKEY'] : ini_get("tideways.api_key"),
+            'sample_rate' => isset($_SERVER['TIDEWAYS_SAMPLERATE']) ? intval($_SERVER['TIDEWAYS_SAMPLERATE']) : ini_get("tideways.sample_rate"),
+            'collect' => isset($_SERVER['TIDEWAYS_COLLECT']) ? $_SERVER['TIDEWAYS_COLLECT'] : (ini_get("tideways.collect") ?: self::MODE_TRACING),
+            'monitor' => isset($_SERVER['TIDEWAYS_MONITOR']) ? $_SERVER['TIDEWAYS_MONITOR'] : (ini_get("tideways.monitor") ?: self::MODE_BASIC),
+            'distributed_tracing_hosts' => isset($_SERVER['TIDEWAYS_ALLOWED_HOSTS']) ? $_SERVER['TIDEWAYS_ALLOWED_HOSTS'] : (ini_get("tideways.distributed_tracing_hosts") ?: '127.0.0.1'),
+            'distributed_trace' => null,
+        );
+        $options = array_merge($defaults, $options);
 
-        if (strlen((string)$apiKey) === 0) {
+        if (strlen((string)$options['api_key']) === 0) {
             return;
         }
 
-        self::init($apiKey);
+        self::init($options['api_key'], $options['distributed_trace'], $options['distributed_tracing_hosts']);
+        self::$mode = self::decideProfiling($options['sample_rate'], $options);
 
-        if (!self::$extensionPrefix) {
-            return;
-        }
+        if (self::$extension === self::EXTENSION_TIDEWAYS) {
+            switch (self::$mode) {
+                case self::MODE_FULL:
+                    $flags = 0;
+                    break;
 
-        self::$profiling = self::decideProfiling($sampleRate);
+                case self::MODE_PROFILING:
+                    $flags = TIDEWAYS_FLAGS_NO_SPANS;
+                    break;
 
-        if (self::$profiling == true) {
-            if (!isset($_SERVER['TIDEWAYS_ENABLE_ARGUMENTS']) || $_SERVER['TIDEWAYS_ENABLE_ARGUMENTS'] == true) {
-                if (!isset($options['argument_functions'])) {
-                    $options['argument_functions'] = self::getDefaultArgumentFunctions();
+                case self::MODE_TRACING:
+                    $flags = TIDEWAYS_FLAGS_NO_HIERACHICAL;
+                    break;
+
+                default:
+                    $flags = TIDEWAYS_FLAGS_NO_COMPILE | TIDEWAYS_FLAGS_NO_USERLAND | TIDEWAYS_FLAGS_NO_BUILTINS;
+                    break;
+            }
+
+            self::$currentRootSpan = new \Tideways\Traces\TwExtensionSpan(0);
+            tideways_enable($flags, self::$defaultOptions);
+
+            if (($flags & TIDEWAYS_FLAGS_NO_SPANS) === 0) {
+                foreach (self::$defaultOptions['watches'] as $watch => $category) {
+                    tideways_span_watch($watch, $category);
+                }
+                foreach (self::$defaultOptions['callbacks'] as $function => $callback) {
+                    tideways_span_callback($function, $callback);
                 }
             }
+        } elseif (self::$extension === self::EXTENSION_XHPROF && (self::$mode & self::MODE_PROFILING) > 0) {
+            \Tideways\Traces\PhpSpan::clear();
+            self::$currentRootSpan = new \Tideways\Traces\PhpSpan(0, 'app');
+            self::$currentRootSpan->startTimer();
 
-            if (self::$framework) {
-                $options['transaction_function'] = self::$framework;
-            }
-
-            if (!isset($options['ignored_functions'])) {
-                $options['ignored_functions'] = array(
-                    'call_user_func',
-                    'call_user_func_array',
-                    'array_filter',
-                    'array_map',
-                    'array_reduce',
-                    'array_walk',
-                    'array_walk_recursive',
-                    'Symfony\Component\DependencyInjection\Container::get',
-                );
-            }
-
-            $enable = self::$extensionPrefix . '_enable';
-            $enable($flags, $options); // full profiling mode
-            return;
+            xhprof_enable(0, self::$defaultOptions);
+        } else {
+            \Tideways\Traces\PhpSpan::clear();
+            self::$currentRootSpan = new \Tideways\Traces\PhpSpan(0, 'app');
+            self::$currentRootSpan->startTimer();
         }
-
-        if ((self::$extensionFlags & self::EXT_LAYERS) === 0) {
-            return;
-        }
-
-        if (!isset($_SERVER['TIDEWAYS_ENABLE_LAYERS']) || !$_SERVER['TIDEWAYS_ENABLE_LAYERS']) {
-            $options['layers'] = array();
-        } else if (!isset($options['layers'])) {
-            $options['layers'] = self::getDefaultLayerFunctions();
-        }
-
-        if (!$options['layers'] && !self::$framework) {
-            return;
-        }
-
-        tideways_layers_enable($options['layers'], self::$framework);
-
-        self::$sampling = true;
     }
 
-    private static function decideProfiling($treshold)
+    /**
+     * Decide in which mode to start collecting data.
+     *
+     * @param int $treshold (0-100)
+     * @param array $options
+     * @return int
+     */
+    private static function decideProfiling($treshold, array $options = array())
     {
-        // Deprecated method, will be removed soon
-        if (isset($_GET['_qprofiler']) && is_string($_GET['_qprofiler']) && $_GET['_qprofiler'] === md5(self::$apiKey)) {
-            self::$correlationId = 'dev-force'; // make sure Daemon keeps the profile.
-
-            if (isset($_GET['_qpm']) && $_GET['_qpm'] === 'curl') {
-                self::setBackend(new Profiler\CurlBackend());
-            }
-
-            return true;
+        if (isset(self::$trace['pid']) && isset(self::$trace['sid']) && self::$trace['sid'] > 0) {
+            self::$trace['keep'] = true; // always keep
+            return self::MODE_TRACING;
         }
 
         $vars = array();
@@ -602,8 +805,8 @@ class Profiler
             parse_str($_SERVER['TIDEWAYS_SESSION'], $vars);
         } else if (isset($_COOKIE['TIDEWAYS_SESSION']) && is_string($_COOKIE['TIDEWAYS_SESSION'])) {
             parse_str($_COOKIE['TIDEWAYS_SESSION'], $vars);
-        } else if (isset($_GET['_qprofiler']) && is_array($_GET['_qprofiler'])) {
-            $vars = $_GET['_qprofiler'];
+        } else if (isset($_GET['_tideways']) && is_array($_GET['_tideways'])) {
+            $vars = $_GET['_tideways'];
         }
 
         if (isset($_SERVER['TIDEWAYS_DISABLE_SESSIONS']) && $_SERVER['TIDEWAYS_DISABLE_SESSIONS']) {
@@ -613,20 +816,39 @@ class Profiler
         if (isset($vars['hash'], $vars['time'], $vars['user'], $vars['method'])) {
             $message = 'method=' . $vars['method'] . '&time=' . $vars['time'] . '&user=' . $vars['user'];
 
-            if ($vars['time'] > time() && hash_hmac('sha256', $message, md5(self::$apiKey)) === $vars['hash']) {
-                if ($vars['method'] === 'curl') {
-                    self::setBackend(new Profiler\CurlBackend());
-                }
+            if ($vars['time'] > time() && hash_hmac('sha256', $message, md5(self::$trace['apiKey'])) === $vars['hash']) {
+                self::$trace['keep'] = true; // always keep
 
-                self::$correlationId = 'dev-user-' . $vars['user'];
-
-                return true;
+                return self::MODE_FULL;
             }
         }
 
+        $collectMode = self::convertMode($options['collect']);
+        $monitorMode = self::convertMode($options['monitor']) & self::MODE_BASIC;
+
         $rand = rand(1, 100);
 
-        return $rand <= $treshold;
+        return ($rand <= $treshold) ? $collectMode : $monitorMode;
+    }
+
+    /**
+     * Make sure provided mode is converted to a valid integer value.
+     *
+     * @return int
+     */
+    private static function convertMode($mode)
+    {
+        if (is_string($mode)) {
+            $mode = defined('\Tideways\Profiler::MODE_' . strtoupper($mode))
+                ? constant('\Tideways\Profiler::MODE_' . strtoupper($mode))
+                : self::MODE_NONE;
+        } else if (!is_int($mode)) {
+            $mode = self::MODE_NONE;
+        } else if (($mode & (self::MODE_FULL|self::MODE_BASIC)) === 0) {
+            $mode = self::MODE_NONE;
+        }
+
+        return $mode;
     }
 
     /**
@@ -636,18 +858,18 @@ class Profiler
      */
     public static function ignoreTransaction()
     {
-        if (self::$started && (self::$profiling || self::$sampling)) {
-            self::$profiling = false;
-            self::$sampling = false;
+        if (self::$mode !== self::MODE_NONE) {
+            self::$mode = self::MODE_NONE;
 
-            $disable = self::$extensionPrefix . '_disable';
-            $disable();
+            if (self::$extension === self::EXTENSION_XHPROF) {
+                xhprof_disable();
+            } else if (self::$extension === self::EXTENSION_TIDEWAYS) {
+                tideways_disable();
+            }
         }
-
-        self::$started = false;
     }
 
-    private static function init($apiKey)
+    private static function init($apiKey, $distributedId = null, $distributedTracingHosts)
     {
         if (self::$shutdownRegistered == false) {
             register_shutdown_function(array("Tideways\\Profiler", "shutdown"));
@@ -661,145 +883,144 @@ class Profiler
             );
         }
 
-        self::$profiling = false;
-        self::$sampling = false;
-        self::$apiKey = $apiKey;
-        self::$customVars = array();
-        self::$customTimers = array();
-        self::$customTimerCount = 0;
-        self::$operationName = 'default';
-        self::$error = false;
-        self::$started = microtime(true);
-        self::$uid = null;
-
         if (function_exists('tideways_enable')) {
-            $version = phpversion('tideways');
-
-            self::$extensionPrefix = 'tideways';
-            self::$extensionFlags = (self::EXT_EXCEPTION | self::EXT_FATAL | self::EXT_TRANSACTION_NAME);
-            self::$extensionFlags |= (version_compare($version, "1.2.2") >= 0) ? self::EXT_LAYERS : 0;
-            self::$customVars['xhpv'] = 'tw-' . $version;
+            self::$extension = self::EXTENSION_TIDEWAYS;
         } else if (function_exists('xhprof_enable')) {
-            self::$extensionPrefix = 'xhprof';
-            self::$customVars['xhpv'] = 'xhp-' . phpversion('xhprof');
-        } else if (function_exists('uprofiler_enable')) {
-            self::$extensionPrefix = 'uprofiler';
-            self::$customVars['xhpv'] = 'up-' . phpversion('uprofiler');
+            self::$extension = self::EXTENSION_XHPROF;
+        }
+
+        self::$mode = self::MODE_BASIC;
+        self::$error = false;
+        self::$trace = array(
+            'apiKey' => $apiKey,
+            'id' => self::generateRandomId(),
+            'tx' => 'default',
+        );
+
+        if ($distributedId === null &&
+            isset($_SERVER['HTTP_X_TW_TRACEID']) &&
+            isset($_SERVER['HTTP_X_TW_SPANID']) &&
+            self::allowAutoStartDistributedTracing($distributedTracingHosts)) {
+
+            $distributedId = new DistributedId(
+                (int)$_SERVER['HTTP_X_TW_SPANID'],
+                (int)$_SERVER['HTTP_X_TW_TRACEID'],
+                isset($_SERVER['HTTP_X_TW_ROOTID']) ? (int)$_SERVER['HTTP_X_TW_ROOTID'] : null
+            );
+        }
+
+        if ($distributedId instanceof DistributedId) {
+            self::$trace['sid'] = $distributedId->parentSpanId;
+            self::$trace['pid'] = $distributedId->parentTraceId;
+            self::$trace['rid'] = $distributedId->rootTraceId;
         }
     }
 
     /**
-     * Return transaction hash for real user monitoring.
+     * Check if the current requests ip-address indicates it comes
+     * from an allowed host to enable distributed tracing.
      *
-     * @return string
+     * @param string $allowedHosts
+     * @return bool
      */
-    public static function getTransactionHash()
+    private static function allowAutoStartDistributedTracing($allowedHosts)
     {
-        return substr(sha1(self::$operationName), 0, 12);
+        $trustedProxies = array();
+        $headerName = false;
+
+        if (!isset($_SERVER['REMOTE_ADDR'])) {
+            return false;
+        }
+
+        $checkIp = $_SERVER['REMOTE_ADDR'];
+
+        if (strpos($allowedHosts, ':') !== false) {
+            $parts = explode(':', $allowedHosts);
+
+            if (count($parts) !== 3) {
+                return false;
+            }
+
+            $headerName = "HTTP_" . strtoupper(str_replace("-", "_", $parts[0]));
+            $trustedProxies = explode(',', $parts[1]);
+            $allowedHosts = explode(',', $parts[2]);
+
+            if (isset($_SERVER[$headerName])) {
+                $proxies = explode(',', $_SERVER[$headerName]);
+                $proxies[] = $_SERVER['REMOTE_ADDR'];
+
+                foreach (array_reverse($proxies) as $proxyIp) {
+                    if (!in_array($proxyIp, $trustedProxies)) {
+                        $checkIp = $proxyIp;
+                        break;
+                    }
+                }
+            }
+        } else {
+            $allowedHosts = explode(',', $allowedHosts);
+        }
+
+        return in_array($checkIp, $allowedHosts);
     }
 
     /**
-     * Return api hash used for real user monitoring.
+     * Generates a random integer used for internal identification and correlation of traces.
      *
-     * @return string
+     * @return int
      */
-    public static function getApiHash()
+    public static function generateRandomId()
     {
-        return sha1(self::$apiKey);
-    }
-
-    public static function setCorrelationId($id)
-    {
-        self::$correlationId = $id;
+        return mt_rand(1, PHP_INT_MAX);
     }
 
     public static function setTransactionName($name)
     {
-        self::$operationName = !empty($name) ? $name : 'empty';
+        self::$trace['tx'] = !empty($name) ? $name : 'default';
     }
 
     /**
-     * Use {@link setTransactionName} instead.
-     *
+     * @return int
+     */
+    public static function currentTraceId()
+    {
+        return isset(self::$trace['id']) ? self::$trace['id'] : 0;
+    }
+
+    public static function rootTraceId()
+    {
+        return isset(self::$trace['rid'])
+            ? self::$trace['rid']
+            : self::currentTraceId();
+    }
+
+    /**
      * @deprecated
      */
     public static function setOperationName($name)
     {
-        self::$operationName = $name;
-    }
-
-    /**
-     * Start a custom timer for SQL execution with the give SQL query.
-     *
-     * Returns the timer id to be passed to {@link stopCustomTimer()}
-     * for completing the timing process. Queries passed to this
-     * method are anonymized using {@link SqlAnonymizer::anonymize()}.
-     *
-     * @param string $query
-     * @return integer|bool
-     */
-    public static function startSqlCustomTimer($query)
-    {
-        return self::startCustomTimer('sql', Profiler\SqlAnonymizer::anonymize($query));
-    }
-
-    /**
-     * Start a custom timer for the given group and using the given description.
-     *
-     * Data passed as description it not anonymized. It is your responsibility to
-     * strip the data of any input that might cause private data to be sent to
-     * Tideways service.
-     *
-     * @param string $group
-     * @param string $description
-     * @return integer|bool
-     */
-    public static function startCustomTimer($group, $description)
-    {
-        if (self::$started == false || self::$profiling == false) {
-            return false;
-        }
-
-        self::$customTimers[self::$customTimerCount] = array("s" => microtime(true), "id" => $description, "group" => $group);
-        self::$customTimerCount++;
-
-        return self::$customTimerCount - 1;
-    }
-
-    /**
-     * Stop the custom timer with given id.
-     *
-     * @return bool
-     */
-    public static function stopCustomTimer($id)
-    {
-        if ($id === false || !isset(self::$customTimers[$id]) || isset(self::$customTimers[$id]["wt"])) {
-            return false;
-        }
-
-        self::$customTimers[$id]["wt"] = intval(round((microtime(true) - self::$customTimers[$id]["s"]) * 1000000));
-        unset(self::$customTimers[$id]["s"]);
-        return true;
-    }
-
-    /**
-     * Return all current custom timers.
-     *
-     * @return array
-     */
-    public static function getCustomTimers()
-    {
-        return self::$customTimers;
+        self::setTransactionName($name);
     }
 
     public static function isStarted()
     {
-        return self::$started !== false;
+        return self::$mode !== self::MODE_NONE;
     }
 
     public static function isProfiling()
     {
-        return self::$profiling;
+        return (self::$mode & self::MODE_PROFILING) > 0;
+    }
+
+    /**
+     * Returns true if profiler is currently tracing spans.
+     *
+     * This can be used to check if adding X-TW-* HTTP headers makes sense.
+     *
+     * @return bool
+     */
+    public static function isTracing()
+    {
+        return (self::$mode & self::MODE_TRACING) > 0;
     }
 
     /**
@@ -822,18 +1043,73 @@ class Profiler
      */
     public static function setCustomVariable($name, $value)
     {
-        if (!self::$profiling || !is_scalar($value)) {
+        if ((self::$mode & self::MODE_FULL) === 0 || !is_scalar($value)) {
             return;
         }
 
-        self::$customVars[$name] = $value;
+        if (!self::$currentRootSpan) {
+            return;
+        }
+
+        self::$currentRootSpan->annotate(array($name => $value));
     }
 
-    public static function getCustomVariable($name)
+    /**
+     * Watch a function for calls and create timeline spans around it.
+     *
+     * @param string $function
+     * @param string $category
+     */
+    public static function watch($function, $category = null)
     {
-        return isset(self::$customVars[$name])
-            ? self::$customVars[$name]
-            : null;
+        if (self::$extension === self::EXTENSION_TIDEWAYS) {
+            self::$defaultOptions['watches'][$function] = $category;
+
+            if ((self::$mode & self::MODE_TRACING) > 0) {
+                tideways_span_watch($function, $category);
+            }
+        }
+    }
+
+    /**
+     * Watch a function and invoke a callback when its called.
+     *
+     * To start a span, call {@link \Tideways\Profiler::createSpan($category)}
+     * inside the callback and return {$span->getId()}:
+     *
+     * @example
+     *
+     * \Tideways\Profiler::watchCallback('mysql_query', function ($context) {
+     *     $span = \Tideways\Profiler::createSpan('sql');
+     *     $span->annotate(array('title' => $context['args'][0]));
+     *     return $span->getId();
+     * });
+     */
+    public static function watchCallback($function, $callback)
+    {
+        if (self::$extension === self::EXTENSION_TIDEWAYS) {
+            self::$defaultOptions['callbacks'][$function] = $callback;
+
+            if ((self::$mode & self::MODE_TRACING) > 0) {
+                tideways_span_callback($function, $callback);
+            }
+        }
+    }
+
+    /**
+     * Create a new trace span with the given category name.
+     *
+     * @example
+     *
+     *  $span = \Tideways\Profiler::createSpan('sql');
+     *
+     * @return \Tideways\Traces\Span
+     */
+    public static function createSpan($name)
+    {
+        return (self::$mode & self::MODE_TRACING) > 0
+            ? self::$currentRootSpan->createSpan($name)
+            : new \Tideways\Traces\NullSpan();
     }
 
     /**
@@ -841,109 +1117,90 @@ class Profiler
      */
     public static function stop()
     {
-        if (self::$started == false) {
+        if (self::$mode === self::MODE_NONE) {
             return;
         }
 
-        $data = null;
-        $sampling = self::$sampling;
+        $mode = self::$mode;
 
-        if (self::$operationName === 'default' && (self::$extensionFlags & self::EXT_TRANSACTION_NAME) > 0) {
-            self::$operationName = tideways_transaction_name() ?: 'default';
+        if (self::$trace['tx'] === 'default' && self::$extension === self::EXTENSION_TIDEWAYS) {
+            self::$trace['tx'] = tideways_transaction_name() ?: 'default';
         }
 
-        if (self::$sampling || self::$profiling) {
-            $disable = self::$extensionPrefix . '_disable';
-            $data = $disable();
+        if (function_exists('tideways_last_detected_exception') && $exception = tideways_last_detected_exception()) {
+            self::logException($exception);
+        } elseif (function_exists("http_response_code") && http_response_code() >= 500) {
+            self::logFatal("PHP request set error HTTP response code to '" . http_response_code() . "'.", "", 0, E_USER_ERROR);
         }
 
-        $duration = intval(round((microtime(true) - self::$started) * 1000));
+        $profilingData = array();
 
-        self::$started = false;
-        self::$profiling = false;
-        self::$sampling = false;
-
-        if (self::$error) {
-            self::storeError(self::$operationName, self::$error, $duration);
-        }
-
-        if (!self::$operationName) {
-            return;
-        }
-
-        if (!$sampling && $data) {
-            self::storeProfile(self::$operationName, $data, self::$customTimers);
-        } else {
-            $callData = $sampling ? $data : array();
-
-            self::storeMeasurement(
-                self::$operationName,
-                $duration,
-                $callData,
-                (self::$error !== false)
-            );
-        }
-    }
-
-    private static function storeError($operationName, $errorData, $duration)
-    {
-        self::$backend->storeError(
-            array(
-                "op" => ($operationName === null ? '__unknown__' : $operationName),
-                "error" => $errorData,
-                "apiKey" => self::$apiKey,
-                "wt" => $duration,
-                "cid" => (string)self::$correlationId
-            )
-        );
-    }
-
-    public static function setDefaultCustomVariables()
-    {
-        if (isset($_SERVER['REQUEST_METHOD']) && !isset(self::$customVars['method'])) {
-            self::$customVars['method'] = $_SERVER["REQUEST_METHOD"];
-        }
-
-        if (isset($_SERVER['REQUEST_URI']) && !isset(self::$customVars['url'])) {
-            if (isset($_SERVER['HTTP_HOST'])) {
-                self::$customVars['url'] = (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . self::getRequestUri();
-            } elseif(isset($_SERVER['SERVER_ADDR'])) {
-                self::$customVars['url'] = (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['SERVER_ADDR'] . self::getRequestUri();
+        if (($mode & self::MODE_FULL) > 0) {
+            if (self::$extension === self::EXTENSION_TIDEWAYS) {
+                $profilingData = tideways_disable();
+            } elseif (self::$extension === self::EXTENSION_XHPROF) {
+                $profilingData = xhprof_disable();
+                self::$currentRootSpan->stopTimer();
             }
+
+            $annotations = array('mem' => ceil(memory_get_peak_usage() / 1024));
+
+            if (self::$extension === self::EXTENSION_TIDEWAYS) {
+                $annotations['xhpv'] = phpversion('tideways');
+            } elseif (self::$extension === self::EXTENSION_XHPROF) {
+                $annotations['xhpv'] = phpversion('xhprof');
+            }
+
+            if (extension_loaded('xdebug')) {
+                $annotations['xdebug'] = '1';
+            }
+
+            if (isset($_SERVER['REQUEST_URI'])) {
+                $annotations['title'] = '';
+                if (isset($_SERVER['REQUEST_METHOD'])) {
+                    $annotations['title'] = $_SERVER["REQUEST_METHOD"] . ' ';
+                }
+
+                if (isset($_SERVER['HTTP_HOST'])) {
+                    $annotations['title'] .= (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . self::getRequestUri();
+                } elseif(isset($_SERVER['SERVER_ADDR'])) {
+                    $annotations['title'] .= (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['SERVER_ADDR'] . self::getRequestUri();
+                }
+
+            } elseif (php_sapi_name() === "cli") {
+                $annotations['title'] = basename($_SERVER['argv'][0]);
+            }
+        } else {
+            self::$currentRootSpan->stopTimer();
+            $annotations = array('mem' => ceil(memory_get_peak_usage() / 1024));
         }
-    }
 
-    private static function storeProfile($operationName, $data, $customTimers)
-    {
-        if (!isset($data["main()"]["wt"]) || !$data["main()"]["wt"]) {
-            return;
+        self::$currentRootSpan->annotate($annotations);
+
+        if (($mode & self::MODE_PROFILING) > 0) {
+            self::$trace['profdata'] = $profilingData ?: array();
         }
 
-        self::setDefaultCustomVariables();
+        self::$mode = self::MODE_NONE;
 
-        self::$backend->storeProfile(array(
-            "uid" => self::getProfileTraceUuid(),
-            "op" => $operationName,
-            "data" => $data,
-            "custom" => $customTimers,
-            "vars" => self::$customVars ?: null,
-            "apiKey" => self::$apiKey,
-            "mem" => round(memory_get_peak_usage() / 1024),
-            "cid" => (string)self::$correlationId,
-        ));
+        $spans = self::$currentRootSpan->getSpans();
+
+        if (self::$error === true || ($mode & self::MODE_FULL) > 0) {
+            self::$trace['spans'] = $spans;
+            self::$backend->socketStore(self::$trace);
+        } else {
+            self::$trace['spans'] = isset($spans[0]) ? array($spans[0]) : array(); // prevent flooding udp by accident
+            self::$backend->udpStore(self::$trace);
+        }
+        self::$trace = null; // free memory
     }
 
-    private static function storeMeasurement($operationName, $duration, array $callData, $isError)
+    private static function createRootSpan()
     {
-        self::$backend->storeMeasurement(array(
-            "op" => $operationName,
-            "wt" => $duration,
-            "mem" => round(memory_get_peak_usage() / 1024),
-            "apiKey" => self::$apiKey,
-            "c" => $callData,
-            "err" => $isError,
-        ));
+
+        return $span;
     }
+
 
     /**
      * Use Request or Script information for the transaction name.
@@ -963,7 +1220,7 @@ class Profiler
     public static function guessOperationName()
     {
         if (php_sapi_name() === "cli") {
-            return basename($_SERVER["argv"][0]);
+            return "cli:" . basename($_SERVER["argv"][0]);
         }
 
         return $_SERVER["REQUEST_METHOD"] . " " . self::getRequestUri();
@@ -978,7 +1235,7 @@ class Profiler
 
     public static function logFatal($message, $file, $line, $type = null, $trace = null)
     {
-        if (self::$error) {
+        if (self::$error === true || !self::$currentRootSpan) {
             return;
         }
 
@@ -986,134 +1243,95 @@ class Profiler
             $type = E_USER_ERROR;
         }
 
-        $message = Profiler\SqlAnonymizer::anonymize($message);
+        $trace = is_array($trace)
+            ? \Tideways\Profiler\BacktraceConverter::convertToString($trace)
+            : $trace;
 
-        self::$error = array(
-            "message" => $message,
-            "file" => $file,
-            "line" => $line,
-            "type" => $type,
-            "trace" => ($trace && is_array($trace)) ? self::anonymizeTrace($trace) : null,
-        );
+        self::$error = true;
+        self::$currentRootSpan->annotate(array(
+            "err_msg" => $message,
+            "err_source" => $file . ':' . $line,
+            "err_exception" => 'EngineException', // Forward compatibility with PHP7
+            "err_trace" => $trace,
+        ));
     }
 
-    public static function logException(\Exception $e)
+    public static function logException(\Exception $exception)
     {
-        $exceptionClass = get_class($e);
-        $exceptionCode = $e->getCode();
-
-        $message = Profiler\SqlAnonymizer::anonymize($e->getMessage());
-
-        self::$error = array(
-            "message" => $message,
-            "file" => $e->getFile(),
-            "line" => $e->getLine(),
-            "type" => $exceptionClass . ($exceptionCode != 0 ? sprintf('(%s)', $exceptionCode) : ''),
-            "trace" => self::anonymizeTrace($e->getTrace()),
-        );
-    }
-
-    private static function anonymizeTrace($trace)
-    {
-        if (is_string($trace)) {
-            return $trace;
+        if (self::$error === true || !self::$currentRootSpan) {
+            return;
         }
 
-        foreach ($trace as $traceLineId => $traceLine) {
-            if (isset($traceLine['args'])) {
-
-                foreach ($traceLine['args'] as $argId => $arg) {
-                    if (is_object($arg)) {
-                        $traceLine['args'][$argId] = get_class($arg);
-                    } else {
-                        $traceLine['args'][$argId] = gettype($arg);
-                    }
-                }
-                $trace[$traceLineId] = $traceLine;
-
-            }
+        // We are only interested in the original exception
+        while ($previous = $exception->getPrevious()) {
+            $exception = $previous;
         }
-        return $trace;
+
+        self::$error = true;
+        self::$currentRootSpan->annotate(array(
+            "err_msg" => $exception->getMessage(),
+            "err_source" => $exception->getFile() . ':' . $exception->getLine(),
+            "err_exception" => get_class($exception),
+            "err_trace" => \Tideways\Profiler\BacktraceConverter::convertToString($exception->getTrace()),
+        ));
     }
 
     public static function shutdown()
     {
-        if ((self::$extensionFlags & self::EXT_FATAL) > 0) {
-            $callback = self::$extensionPrefix . '_last_fatal_error';
-            $lastError = $callback();
-        } else {
-            $lastError = error_get_last();
+        if (self::$mode === self::MODE_NONE) {
+            return;
         }
+
+        $lastError = error_get_last();
 
         if ($lastError && ($lastError["type"] === E_ERROR || $lastError["type"] === E_PARSE || $lastError["type"] === E_COMPILE_ERROR)) {
-            self::logFatal(
-                $lastError["message"],
-                $lastError["file"],
-                $lastError["line"],
-                $lastError["type"],
-                isset($lastError["trace"]) ? $lastError["trace"] : null
-            );
-        }
+            $lastError['trace'] = function_exists('tideways_fatal_backtrace') ? tideways_fatal_backtrace() : null;
 
-        if (function_exists("http_response_code") && http_response_code() >= 500) {
-            self::logFatal("PHP request set error HTTP response code to '" . http_response_code() . "'.", "", 0, E_USER_ERROR);
+            self::logFatal($lastError['message'], $lastError['file'], $lastError['line'], $lastError['type'], $lastError['trace']);
         }
 
         self::stop();
     }
 
     /**
-     * Get a unique identifier for the current profile trace.
-     *
-     * Base64 encoded version of the binary representation of a UUID.
-     *
-     * @return string
+     * Check for auto starting the Profiler in Web and CLI (via Env Variable)
      */
-    public static function getProfileTraceUuid()
+    public static function autoStart()
     {
-        if (self::$uid === null) {
-            $uuid = base64_encode(
-                pack(
-                    "h*",
-                    sprintf(
-                        '%04x%04x%04x%04x%04x%04x%04x%04x',
-                        mt_rand(0, 0xffff),
-                        mt_rand(0, 0xffff),
-                        mt_rand(0, 0xffff),
-                        mt_rand(0, 0x0fff) | 0x4000,
-                        mt_rand(0, 0x3fff) | 0x8000,
-                        mt_rand(0, 0xffff),
-                        mt_rand(0, 0xffff),
-                        mt_rand(0, 0xffff)
-                    )
-                )
-            );
-            $uuid = str_replace("/", "_", $uuid);
-            $uuid = str_replace("+", "-", $uuid);
-
-            self::$uid = substr($uuid, 0, strlen($uuid) - 2);
+        if (ini_get("tideways.auto_start") || isset($_SERVER["TIDEWAYS_AUTO_START"])) {
+            if (self::isStarted() === false) {
+                if (php_sapi_name() !== "cli") {
+                    /**
+                     * In Web context we auto start with the framework transaction name
+                     * configured in INI or ENV variable.
+                     */
+                    if (ini_get("tideways.framework")) {
+                        self::detectFramework(ini_get("tideways.framework"));
+                    } else if (isset($_SERVER['TIDEWAYS_FRAMEWORK'])) {
+                        self::detectFramework($_SERVER["TIDEWAYS_FRAMEWORK"]);
+                    }
+                    self::start();
+                } else if (php_sapi_name() === "cli" && !empty($_SERVER["TIDEWAYS_SESSION"]) && isset($_SERVER['argv'])) {
+                    self::start();
+                    self::setTransactionName("cli:" . basename($_SERVER['argv'][0]));
+                }
+            }
         }
 
-        return self::$uid;
+        if (self::requiresDelegateToOriginalPrependFile()) {
+            require_once ini_get("auto_prepend_file");
+        }
     }
 
     /**
-     * Render HTML that the profiling toolbar picks up to display inline development information.
-     *
-     * This method does not display the html, it just returns it.
-     *
-     * @return string
+     * @return bool
      */
-    public static function renderToolbarBootstrapHtml()
+    private static function requiresDelegateToOriginalPrependFile()
     {
-        if (self::$started == false || self::$sampling === true) {
-            return;
-        }
-
-        return sprintf(
-            '<div id="Tideways-Profiler-Profile-Id" data-trace-id="%s" style="display:none !important;" aria-hidden="true"></div>',
-            self::getProfileTraceUuid()
-        );
+        return ini_get('tideways.auto_prepend_library') &&
+               tideways_prepend_overwritten() &&
+               ini_get("auto_prepend_file") &&
+               file_exists(stream_resolve_include_path(ini_get("auto_prepend_file")));
     }
 }
 /**
@@ -1138,24 +1356,5 @@ namespace QafooLabs;
 class Profiler extends \Tideways\Profiler
 {
 }
-
-/** Check for auto starting the Profiler in Web and CLI (via Env Variable) */
-if (ini_get("tideways.auto_start") || isset($_SERVER['TIDEWAYS_AUTO_START'])) {
-    if (php_sapi_name() !== "cli") {
-        /**
-         * In Web context we auto start with the framework transaction name
-         * configured in INI or ENV variable.
-         */
-        if (ini_get("tideways.transaction_function")) {
-            \Tideways\Profiler::detectFrameworkTransaction(ini_get("tideways.transaction_function"));
-        } else if (isset($_SERVER['TIDEWAYS_TRANSACTION_NAME'])) {
-            \Tideways\Profiler::detectFrameworkTransaction($_SERVER['TIDEWAYS_TRANSACTION_NAME']);
-        }
-        \Tideways\Profiler::start();
-    } else if (php_sapi_name() === "cli" && !empty($_SERVER['TIDEWAYS_START'])) {
-        \Tideways\Profiler::startDevelopment();
-
-        $transactionName = "cli:" . basename($argv[0]);
-        \Tideways\Profiler::setTransactionName($transactionName);
-    }
-}
+// auto-starts the profiler if that is configured
+\Tideways\Profiler::autoStart();
