@@ -43,5 +43,22 @@ class TidewaysDaemon < Formula
             </plist>
         EOS
     end
+
+    def caveats
+        <<-EOS.undent
+
+        (Re-)start the daemon after the installation with launchctl:
+
+            launchctl unload ~/Library/LaunchAgents/homebrew.mxcl.tideways-daemon.plist
+            launchctl load -w ~/Library/LaunchAgents/homebrew.mxcl.tideways-daemon.plist
+
+        If the plist entry is missing you can symlink it over to the correct directory:
+
+            sudo ln -sfv /usr/local/Cellar/tideways-daemon/#{version}/*.plist ~/Library/LaunchAgents
+
+        Please contact support@tideways.io if you have problems setting up the daemon.
+
+        EOS
+    end
 end
 
