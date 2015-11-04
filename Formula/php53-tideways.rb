@@ -4,8 +4,8 @@ class Php53Tideways < AbstractTidewaysPhpExtension
     init
     homepage 'https://github.com/tideways/php-profiler-extension'
     head 'https://github.com/tideways/php-profiler-extension.git'
-    url 'https://github.com/tideways/php-profiler-extension/archive/v2.0.8.zip'
-    version 'v2.0.8'
+    url 'https://github.com/tideways/php-profiler-extension/archive/v3.0.1.zip'
+    version 'v3.0.1'
 
     depends_on 'pcre'
 
