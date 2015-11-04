@@ -518,8 +518,6 @@ use Tideways\Traces\DistributedId;
  */
 class Profiler
 {
-    const VERSION = '2.0.5';
-
     const MODE_NONE = 0;
     const MODE_BASIC = 1;
     const MODE_PROFILING = 2;
@@ -740,7 +738,7 @@ class Profiler
         self::init($options['api_key'], $options['distributed_trace'], $options['distributed_tracing_hosts']);
         self::$mode = self::decideProfiling($options['sample_rate'], $options);
 
-        if (self::$extension === self::EXTENSION_TIDEWAYS) {
+        if (self::$extension === self::EXTENSION_TIDEWAYS && (self::$mode !== self::MODE_NONE)) {
             switch (self::$mode) {
                 case self::MODE_FULL:
                     $flags = 0;
@@ -1154,6 +1152,7 @@ class Profiler
             if (extension_loaded('xdebug')) {
                 $annotations['xdebug'] = '1';
             }
+            $annotations['php'] = PHP_VERSION;
 
             if (isset($_SERVER['REQUEST_URI'])) {
                 $annotations['title'] = '';
