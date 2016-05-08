@@ -4,10 +4,8 @@ class Php55Tideways < AbstractTidewaysPhpExtension
     init
     homepage 'https://github.com/tideways/php-profiler-extension'
     head 'https://github.com/tideways/php-profiler-extension.git'
-    url 'https://github.com/tideways/php-profiler-extension/archive/v3.0.3.zip'
-    version 'v3.0.3'
-
-    depends_on 'pcre'
+    url 'https://github.com/tideways/php-profiler-extension/archive/v4.0.4.zip'
+    version 'v4.0.4'
 
     def self.init opts=[]
         super()
