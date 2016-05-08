@@ -541,6 +541,11 @@ class Profiler
     const FRAMEWORK_WORDPRESS          = 'wordpress';
     const FRAMEWORK_LARAVEL            = 'laravel';
     const FRAMEWORK_MAGENTO            = 'magento';
+    const FRAMEWORK_MAGENTO2           = 'magento2';
+    const FRAMEWORK_PRESTA16           = 'presta16';
+    const FRAMEWORK_DRUPAL8            = 'drupal8';
+    const FRAMEWORK_TYPO3              = 'typo3';
+    const FRAMEWORK_FLOW               = 'flow';
 
     /**
      * Default XHProf/Tideways hierachical profiling options.
@@ -644,6 +649,31 @@ class Profiler
                 self::$defaultOptions['exception_function'] = 'Mage::printException';
                 break;
 
+            case self::FRAMEWORK_MAGENTO2:
+                self::$defaultOptions['transaction_function'] = 'Magento\Framework\App\ActionFactory::create';
+                self::$defaultOptions['exception_function'] = 'Magento\Framework\App\Http::catchException';
+                break;
+
+            case self::FRAMEWORK_PRESTA16:
+                self::$defaultOptions['transaction_function'] = 'ControllerCore::getController';
+                self::$defaultOptions['exception_function'] = 'PrestaShopExceptionCore::displayMessage';
+                break;
+
+            case self::FRAMEWORK_DRUPAL8:
+                self::$defaultOptions['transaction_function'] = 'Drupal\Core\Controller\ControllerResolver::createController';
+                self::$defaultOptions['exception_function'] = 'Symfony\Component\HttpKernel\HttpKernel::handleException';
+                break;
+
+            case self::FRAMEWORK_FLOW:
+                self::$defaultOptions['transaction_function'] = 'TYPO3\Flow\Mvc\Controller\ActionController::callActionMethod';
+                self::$defaultOptions['exception_function'] = 'TYPO3\Flow\Error\AbstractExceptionHandler::handleException';
+                break;
+
+            case self::FRAMEWORK_TYPO3:
+                self::$defaultOptions['transaction_function'] = 'TYPO3\CMS\Extbase\Mvc\Controller\ActionController::callActionMethod';
+                self::$defaultOptions['exception_function'] = 'TYPO3\CMS\Error\AbstractExceptionHandler::handleException';
+                break;
+
             default:
                 self::$defaultOptions['transaction_function'] = $framework;
                 break;
@@ -723,8 +753,8 @@ class Profiler
 
         $defaults = array(
             'api_key' => isset($_SERVER['TIDEWAYS_APIKEY']) ? $_SERVER['TIDEWAYS_APIKEY'] : ini_get("tideways.api_key"),
-            'sample_rate' => isset($_SERVER['TIDEWAYS_SAMPLERATE']) ? intval($_SERVER['TIDEWAYS_SAMPLERATE']) : ini_get("tideways.sample_rate"),
-            'collect' => isset($_SERVER['TIDEWAYS_COLLECT']) ? $_SERVER['TIDEWAYS_COLLECT'] : (ini_get("tideways.collect") ?: self::MODE_TRACING),
+            'sample_rate' => isset($_SERVER['TIDEWAYS_SAMPLERATE']) ? intval($_SERVER['TIDEWAYS_SAMPLERATE']) : (ini_get("tideways.sample_rate") ?: 10),
+            'collect' => isset($_SERVER['TIDEWAYS_COLLECT']) ? $_SERVER['TIDEWAYS_COLLECT'] : (ini_get("tideways.collect") ?: self::MODE_PROFILING),
             'monitor' => isset($_SERVER['TIDEWAYS_MONITOR']) ? $_SERVER['TIDEWAYS_MONITOR'] : (ini_get("tideways.monitor") ?: self::MODE_BASIC),
             'distributed_tracing_hosts' => isset($_SERVER['TIDEWAYS_ALLOWED_HOSTS']) ? $_SERVER['TIDEWAYS_ALLOWED_HOSTS'] : (ini_get("tideways.distributed_tracing_hosts") ?: '127.0.0.1'),
             'distributed_trace' => null,
@@ -736,7 +766,18 @@ class Profiler
         }
 
         self::init($options['api_key'], $options['distributed_trace'], $options['distributed_tracing_hosts']);
-        self::$mode = self::decideProfiling($options['sample_rate'], $options);
+        self::decideProfiling($options['sample_rate'], $options);
+    }
+
+    /**
+     * Enable the profiler in the given $mode.
+     *
+     * @param string $mode
+     * @return void
+     */
+    private static function enableProfiler($mode)
+    {
+        self::$mode = $mode;
 
         if (self::$extension === self::EXTENSION_TIDEWAYS && (self::$mode !== self::MODE_NONE)) {
             switch (self::$mode) {
@@ -792,7 +833,8 @@ class Profiler
     {
         if (isset(self::$trace['pid']) && isset(self::$trace['sid']) && self::$trace['sid'] > 0) {
             self::$trace['keep'] = true; // always keep
-            return self::MODE_TRACING;
+            self::enableProfiler(self::MODE_TRACING);
+            return;
         }
 
         $vars = array();
@@ -817,7 +859,9 @@ class Profiler
             if ($vars['time'] > time() && hash_hmac('sha256', $message, md5(self::$trace['apiKey'])) === $vars['hash']) {
                 self::$trace['keep'] = true; // always keep
 
-                return self::MODE_FULL;
+                self::enableProfiler(self::MODE_FULL);
+                self::setCustomVariable('user', $vars['user']);
+                return;
             }
         }
 
@@ -825,8 +869,9 @@ class Profiler
         $monitorMode = self::convertMode($options['monitor']) & self::MODE_BASIC;
 
         $rand = rand(1, 100);
+        $mode = ($rand <= $treshold) ? $collectMode : $monitorMode;
 
-        return ($rand <= $treshold) ? $collectMode : $monitorMode;
+        self::enableProfiler($mode);
     }
 
     /**
@@ -1255,9 +1300,13 @@ class Profiler
         ));
     }
 
-    public static function logException(\Exception $exception)
+    public static function logException($exception)
     {
-        if (self::$error === true || !self::$currentRootSpan) {
+        if (is_string($exception)) {
+            $exception = new \RuntimeException($exception);
+        }
+
+        if (self::$error === true || !self::$currentRootSpan || !($exception instanceof \Exception)) {
             return;
         }
 
