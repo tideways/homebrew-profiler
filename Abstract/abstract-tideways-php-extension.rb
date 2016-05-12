@@ -65,9 +65,9 @@ class AbstractTidewaysPhpExtension < Formula
 
   def php_branch
     class_name = self.class.name.split("::").last
-    matches = /^Php5([3-9]+)/.match(class_name)
+    matches = /^Php([5,7])([0-9]+)/.match(class_name)
     if matches
-      "5." + matches[1]
+      matches[1] + "." + matches[2]
     else
       raise "Unable to guess PHP branch for #{class_name}"
     end
