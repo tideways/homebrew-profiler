@@ -109,7 +109,7 @@ class AbstractTidewaysPhpExtension < Formula
 
   def extension
     class_name = self.class.name.split("::").last
-    matches = /^Php5[3-9](.+)/.match(class_name)
+    matches = /^Php[5,7][0-9](.+)/.match(class_name)
     if matches
       matches[1].downcase
     else
