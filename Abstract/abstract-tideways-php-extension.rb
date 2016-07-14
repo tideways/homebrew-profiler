@@ -43,7 +43,7 @@ class AbstractTidewaysPhpExtension < Formula
       i = IO.popen("#{phpize} -v")
       out = i.readlines.join("")
       i.close
-      { 53 => 20090626, 54 => 20100412, 55 => 20121113, 56 => 20131226 }.each do |v, api|
+      { 53 => 20090626, 54 => 20100412, 55 => 20121113, 56 => 20131226, 70 => 20151012 }.each do |v, api|
         installed_php_version = v.to_s if out.match(/#{api}/)
       end
 
