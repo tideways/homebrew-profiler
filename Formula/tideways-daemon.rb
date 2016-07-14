@@ -32,7 +32,7 @@ class TidewaysDaemon < Formula
                 <string>#{opt_bin}/#{bin_name}</string>
                 <string>--address=#{var}/run/tidewaysd.sock</string>
                 <string>--log=#{var}/tideways/daemon.log</string>
-                <string>--env=development</string>
+                <string>--env=production</string>
               </array>
               <key>RunAtLoad</key>
               <true/>
