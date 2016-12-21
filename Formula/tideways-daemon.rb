@@ -5,8 +5,8 @@ class TidewaysDaemon < Formula
 
     url 'https://s3-eu-west-1.amazonaws.com/qafoo-profiler/downloads/tideways-daemon_macos_amd64-1.3.7.tar.gz'  if MacOS.prefer_64_bit?
     url 'https://s3-eu-west-1.amazonaws.com/qafoo-profiler/downloads/tideways-daemon_macos_i386-1.3.7.tar.gz'  if not MacOS.prefer_64_bit?
-    sha1 '589bb94d2230c67c6394db1fc2b00d1ab594b72d' if MacOS.prefer_64_bit?
-    sha1 '0153183f4e120a21b11344c6d5067289538ca655' if not MacOS.prefer_64_bit?
+    sha256 'a4ea4ca1285dd9a9a5b20d5a01e43c753a94a92299d4e048da5a8167ae9ef310' if MacOS.prefer_64_bit?
+    sha256 '3d547bed7240739eeaa95cb0e88144e4a12d279d40cbc53becb26e9e1ee49eb8' if not MacOS.prefer_64_bit?
 
     def bin_name
         return "tideways-daemon"
