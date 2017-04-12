@@ -3,10 +3,8 @@ require "formula"
 class TidewaysDaemon < Formula
     homepage 'https://tideways.io'
 
-    url 'https://s3-eu-west-1.amazonaws.com/qafoo-profiler/downloads/tideways-daemon_macos_amd64-1.3.7.tar.gz'  if MacOS.prefer_64_bit?
-    url 'https://s3-eu-west-1.amazonaws.com/qafoo-profiler/downloads/tideways-daemon_macos_i386-1.3.7.tar.gz'  if not MacOS.prefer_64_bit?
-    sha256 'a4ea4ca1285dd9a9a5b20d5a01e43c753a94a92299d4e048da5a8167ae9ef310' if MacOS.prefer_64_bit?
-    sha256 '3d547bed7240739eeaa95cb0e88144e4a12d279d40cbc53becb26e9e1ee49eb8' if not MacOS.prefer_64_bit?
+    url 'https://s3-eu-west-1.amazonaws.com/tideways/daemon/1.5.5/tideways-daemon_macos_amd64-1.5.5.tar.gz'
+    sha256 '2a8efaf84cbbe6321b6c13f3fd745d82578d5a471bd1fc0f1bed34a292386357'
 
     def bin_name
         return "tideways-daemon"
