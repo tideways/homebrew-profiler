@@ -132,7 +132,6 @@ class AbstractTidewaysPhpExtension < Formula
       [#{extension}]
       #{extension_type}="#{module_path}"
       tideways.connection=unix://#{var}/run/tidewaysd.sock
-      tideways.load_library=0
       EOS
     rescue Exception
       nil
