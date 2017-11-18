@@ -18,6 +18,15 @@ Requirements: [homebrew-php](https://github.com/Homebrew/homebrew-php)
 	    brew install php71-tideways
 	    brew install php72-tideways
 
+    If you get an error about a missing "php.h", then try again with the flag --env=std
+
+	    brew install php71-tideways --env=std
+
+    **Notice: The installer uses PHPs "auto_prepend_file" to load the Tideways.php library.
+    This is different from how the Linux version of Tideways works. Make sure that
+    the `/usr/local/etc/php/7.1/conf.d/ext-tideways.ini` contains the `auto_prepend_file`
+    directive.
+
 2. b.) Install PHP using System PHP
 
         brew install php54-tideways --without-homebrew-php
