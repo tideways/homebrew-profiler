@@ -30,7 +30,7 @@ class AbstractTidewaysPhpExtension < Formula
 
     # Create extension dir if not exists (because homebrew-php saves into different folder)
     FileUtils.mkdir extension_dir
-    FileUtils.cp File.expand_path("../../Files/Tideways.php", __FILE__), extension_dir + "/Tideways.php"
+    FileUtils.cp File.expand_path("../../Files/Tideways.php", __FILE__), "#{prefix}/Tideways.php"
 
     write_config_file if build.with? "config-file"
   end
@@ -131,6 +131,7 @@ class AbstractTidewaysPhpExtension < Formula
       [#{extension}]
       #{extension_type}="#{module_path}"
       tideways.connection=unix://#{var}/run/tidewaysd.sock
+      auto_prepend_file=#{prefix}/Tideways.php
       EOS
   rescue StandardError
     nil
