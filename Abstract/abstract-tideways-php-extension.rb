@@ -21,7 +21,8 @@ class AbstractTidewaysPhpExtension < Formula
 
     safe_phpize
     system "./configure", "--prefix=#{prefix}",
-    phpconfig
+                          phpconfig
+
     system "make"
     prefix.install "modules/tideways.so"
 
@@ -38,18 +39,18 @@ class AbstractTidewaysPhpExtension < Formula
   def initialize(*)
     super
 
-    if build.without? 'homebrew-php'
+    if build.without? "homebrew-php"
       installed_php_version = nil
       i = IO.popen("#{phpize} -v")
       out = i.readlines.join("")
       i.close
-      { 53 => 20090626, 54 => 20100412, 55 => 20121113, 56 => 20131226, 70 => 20151012, 71 => 20160303 }.each do |v, api|
+      { 53 => 20090626, 54 => 20100412, 55 => 20121113, 56 => 20131106, 70 => 20151012, 71 => 20160303, 72 => 20170718 }.each do |v, api|
         installed_php_version = v.to_s if out.match(/#{api}/)
       end
 
-      raise UnsupportedPhpApiError.new if installed_php_version.nil?
+      raise UnsupportedPhpApiError if installed_php_version.nil?
 
-      required_php_version = php_branch.sub('.', '').to_s
+      required_php_version = php_branch.sub(".", "").to_s
       unless installed_php_version == required_php_version
         raise InvalidPhpizeError.new(installed_php_version, required_php_version)
       end
@@ -57,10 +58,10 @@ class AbstractTidewaysPhpExtension < Formula
   end
 
   def self.init
-    depends_on 'autoconf' => :build
+    depends_on "autoconf" => :build
 
-    option 'without-homebrew-php', "Ignore homebrew PHP and use default instead"
-    option 'without-config-file', "Do not install extension config file"
+    option "without-homebrew-php", "Ignore homebrew PHP and use default instead"
+    option "without-config-file", "Do not install extension config file"
   end
 
   def php_branch
@@ -74,7 +75,7 @@ class AbstractTidewaysPhpExtension < Formula
   end
 
   def php_formula
-    'php' + php_branch.sub('.', '')
+    "php" + php_branch.sub(".", "")
   end
 
   def safe_phpize
@@ -84,7 +85,7 @@ class AbstractTidewaysPhpExtension < Formula
   end
 
   def phpize
-    if build.without? 'homebrew-php'
+    if build.without? "homebrew-php"
       "phpize"
     else
       "#{Formula[php_formula].opt_bin}/phpize"
@@ -92,7 +93,7 @@ class AbstractTidewaysPhpExtension < Formula
   end
 
   def phpini
-    if build.without? 'homebrew-php'
+    if build.without? "homebrew-php"
       "php.ini presented by \"php --ini\""
     else
       "#{Formula[php_formula].config_path}/php.ini"
@@ -100,7 +101,7 @@ class AbstractTidewaysPhpExtension < Formula
   end
 
   def phpconfig
-    if build.without? 'homebrew-php'
+    if build.without? "homebrew-php"
       ""
     else
       "--with-php-config=#{Formula[php_formula].opt_bin}/php-config"
@@ -123,23 +124,25 @@ class AbstractTidewaysPhpExtension < Formula
   end
 
   def module_path
-    prefix / "#{extension}.so"
+    opt_prefix / "#{extension}.so"
   end
 
   def config_file
-    begin
-      <<-EOS.undent
+    <<-EOS.undent
       [#{extension}]
       #{extension_type}="#{module_path}"
       tideways.connection=unix://#{var}/run/tidewaysd.sock
       EOS
-    rescue Exception
-      nil
-    end
+  rescue StandardError
+    nil
+  end
+
+  test do
+    assert shell_output("#{Formula[php_formula].opt_bin}/php -m").downcase.include?(extension.downcase), "failed to find extension in php -m output"
   end
 
   def caveats
-    caveats = [ "To finish installing #{extension} for PHP #{php_branch}:" ]
+    caveats = ["To finish installing #{extension} for PHP #{php_branch}:"]
 
     if build.without? "config-file"
       caveats << "  * Add the following line to #{phpini}:\n"
@@ -159,7 +162,7 @@ class AbstractTidewaysPhpExtension < Formula
   * - If you see it, you have been successful!
   *
   * Using PHP from the command line:
-  * - Run "php -i" (command-line "phpinfo()")
+  * - Run `php -i "(command-line 'phpinfo()')"`
   * - Look for the info on the #{extension} module.
   * - If you see it, you have been successful!
 EOS
