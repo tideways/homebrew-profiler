@@ -14,6 +14,9 @@ Requirements: [homebrew-php](https://github.com/Homebrew/homebrew-php)
 	    brew install php54-tideways
 	    brew install php55-tideways
 	    brew install php56-tideways
+	    brew install php70-tideways
+	    brew install php71-tideways
+	    brew install php72-tideways
 
 2. b.) Install PHP using System PHP
 
@@ -40,7 +43,7 @@ and uses parts of their codebase to work with different PHP versions.
 
 ## License
 
-Copyright (c) 2014-2016 Tideways GmbH
+Copyright (c) 2014-2017 Tideways GmbH
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
