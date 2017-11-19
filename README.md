@@ -10,7 +10,6 @@ Requirements: [homebrew-php](https://github.com/Homebrew/homebrew-php)
 
 2. a.) Install PHP Extension (if you have `homebrew-php`)
 
-	    brew install php53-tideways
 	    brew install php54-tideways
 	    brew install php55-tideways
 	    brew install php56-tideways
