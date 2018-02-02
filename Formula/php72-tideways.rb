@@ -4,7 +4,7 @@ class Php72Tideways < AbstractTidewaysPhpExtension
     init
     homepage 'https://github.com/tideways/php-xhprof-extension'
     head 'https://github.com/tideways/php-xhprof-extension.git'
-    url 'https://github.com/tideways/php-xhprof-extension/archive/v4.1.4.zip'
-    sha256 '8897c04084cdb2e4f5520a70f61113d27cf8a6081d5726f50a71b338ca10c3f9'
-    version 'v4.1.4'
+    url 'https://github.com/tideways/php-xhprof-extension/archive/v4.1.5.zip'
+    sha256 'c21786a2aa5d4284029d7c52b85b7dc0242d135494678845da3c7ddd64750934'
+    version '4.1.5'
 end

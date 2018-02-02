@@ -2,27 +2,41 @@
 
 function calculate_checksums($formula, $version)
 {
-    $url32 = "https://s3-eu-west-1.amazonaws.com/qafoo-profiler/downloads/{$formula}_macos_amd64-{$version}.tar.gz";
-    $url64 = "https://s3-eu-west-1.amazonaws.com/qafoo-profiler/downloads/{$formula}_macos_i386-{$version}.tar.gz";
-    $sha32 = sha1(file_get_contents($url32));
-    $sha64 = sha1(file_get_contents($url64));
+    if ($formula === 'php') {
+        $url = "https://github.com/tideways/php-xhprof-extension/archive/v{$version}.zip";
+        $hash = hash('sha256', file_get_contents($url));
 
-    $formulaFile = __DIR__ . "/../Formula/" . $formula . ".rb";
+        $phpVersions = ['54', '55', '56', '70', '71', '72'];
+
+        foreach ($phpVersions as $phpVersion) {
+            $formulaFile = __DIR__ . "/../Formula/php{$phpVersion}-tideways.rb";
+            replace_formula($formulaFile, $url, $hash, $version);
+        }
+    } else {
+        $url = "https://s3-eu-west-1.amazonaws.com/qafoo-profiler/downloads/{$formula}_macos_amd64-{$version}.tar.gz";
+        $hash = hash('sha256', file_get_contents($url));
+
+        $formulaFile = __DIR__ . "/../Formula/" . $formula . ".rb";
+
+        replace_formula($formulaFile, $url, $hash, $version);
+    }
+}
+
+function replace_formula($formulaFile, $url, $hash, $version)
+{
     $lines = file($formulaFile);
 
-    $lines = array_filter($lines, function ($line) {
-        $line = trim($line);
-        return (strpos($line, "url '") !== 0 && strpos($line, "sha1 '") !== 0 && strpos($line, "version '") !== 0);
-    });
+    for ($i = 0; $i < count($lines); $i++) {
+        if (strpos(trim($lines[$i]), "url '") === 0) {
+            $lines[$i] = "    url '" . $url . "'\n";
+        } else if (strpos(trim($lines[$i]), "sha256 '") === 0) {
+            $lines[$i] = "    sha256 '" . $hash . "'\n";
+        } else if (strpos(trim($lines[$i]), "version '") === 0) {
+            $lines[$i] = "    version '" . $version . "'\n";
+        }
+    }
 
-    $newLines = [
-        "    url '" . $url64 . "'  if MacOS.prefer_64_bit?\n",
-        "    url '" . $url32 . "'  if not MacOS.prefer_64_bit?\n",
-        "    sha1 '" . $sha64 . "' if MacOS.prefer_64_bit?\n",
-        "    sha1 '" . $sha32 . "' if not MacOS.prefer_64_bit?\n",
-    ];
-
-    file_put_contents($formulaFile, array_merge(array_slice($lines, 0, 5), $newLines, array_slice($lines, 5)));
+    file_put_contents($formulaFile, implode("", $lines));
 }
 
 function fetch_url($code, $architecture)
@@ -37,7 +51,12 @@ function fetch_url($code, $architecture)
     throw new \RuntimeException("Could not find url.");
 }
 
-if (!in_array($argv[1], ['tideways-daemon', 'tideways-cli'])) {
+if (!isset($argv[2])) {
+    echo "php Tools/checksums.php <formula> <new-version>\n";
+    exit(1);
+}
+
+if (!in_array($argv[1], ['tideways-daemon', 'tideways-cli', 'php'])) {
     echo "php Tools/checksums.php <formula> <new-version>\n";
     exit(1);
 }
