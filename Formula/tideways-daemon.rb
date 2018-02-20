@@ -17,7 +17,7 @@ class TidewaysDaemon < Formula
        (var+"run").mkpath
     end
 
-    def plist; <<-EOS.undent
+    def plist; <<~EOS
             <?xml version="1.0" encoding="UTF-8"?>
             <plist version="1.0">
             <dict>
@@ -42,7 +42,7 @@ class TidewaysDaemon < Formula
     end
 
     def caveats
-        <<-EOS.undent
+        <<~EOS
 
         (Re-)start the daemon after the installation with launchctl:
 

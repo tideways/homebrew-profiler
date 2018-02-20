@@ -14,7 +14,7 @@ class TidewaysCli < Formula
     end
 
     def caveats
-        return <<-EOS.undent
+        return <<~EOS
           Follow the instructions on Tideways Profiler website
           to import your application settings:
 
