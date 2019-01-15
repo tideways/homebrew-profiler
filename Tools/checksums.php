@@ -39,18 +39,6 @@ function replace_formula($formulaFile, $url, $hash, $version)
     file_put_contents($formulaFile, implode("", $lines));
 }
 
-function fetch_url($code, $architecture)
-{
-    $architectureMatcher = ($architecture === 64)
-        ? 'if MacOS.prefer_64_bit\?'
-        : 'if not MacOS.prefer_64_bit\?';
-    if (preg_match('(url \'([^\']+)\' ' . $architectureMatcher . ')', $code, $match)) {
-        return $match[1];
-    }
-
-    throw new \RuntimeException("Could not find url.");
-}
-
 if (!isset($argv[2])) {
     echo "php Tools/checksums.php <formula> <new-version>\n";
     exit(1);
