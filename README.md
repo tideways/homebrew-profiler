@@ -2,6 +2,14 @@
 
 With this repository you can install the Tideways Profiler Daemon, Commandline-Tool and PHP Extension via Homebrew.
 
+> **Warning:** This only works with homebrew PHP installations or the default PHP
+> installation shipped with MacOS.  If you are using other PHP installation
+> mechanisms, for example [Acquia Dev
+> Desktop](https://www.acquia.com/drupal/acquia-dev-desktop) or [PHP OSX by
+> Liip](https://php-osx.liip.ch/) then this mechanism **will not work**. You need
+> to clone the tideways/php-profiler-extension and compile the 4.x branch
+> manually.
+
 Requirements: [homebrew-php](https://github.com/Homebrew/homebrew-php)
 
 1. Tap this repository
