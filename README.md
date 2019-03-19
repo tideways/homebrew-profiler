@@ -29,7 +29,7 @@ Requirements: [homebrew-php](https://github.com/Homebrew/homebrew-php)
 
 	    brew install php71-tideways --env=std
 
-    **Notice: The installer uses PHPs "auto_prepend_file" to load the Tideways.php library.
+    **Notice**: The installer uses PHPs "auto_prepend_file" to load the Tideways.php library.
     This is different from how the Linux version of Tideways works. Make sure that
     the `/usr/local/etc/php/7.1/conf.d/ext-tideways.ini` contains the `auto_prepend_file`
     directive.
