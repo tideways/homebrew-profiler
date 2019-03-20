@@ -17,6 +17,10 @@ end
 
 class AbstractTidewaysPhpExtension < Formula
   def install
+    # add --env=std to formula
+    # https://github.com/Homebrew/brew/pull/3659#commitcomment-26987956
+    env :std
+
     ENV.universal_binary if build.universal?
 
     safe_phpize
