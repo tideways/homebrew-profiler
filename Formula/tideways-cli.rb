@@ -3,9 +3,9 @@ require "formula"
 class TidewaysCli < Formula
     homepage 'https://tideways.io'
 
-    url 'https://s3-eu-west-1.amazonaws.com/tideways/cli/0.3.3/tideways-cli_0.3.3_macos_amd64.tar.gz'
-    sha256 '021571645f7564fee9810db488b3e1d3f9dfbfa886e566027d0d078d6d6124ba'
-    version 'v0.3.3'
+    url 'https://s3-eu-west-1.amazonaws.com/tideways/cli/0.4.0/tideways-cli_0.4.0_macos_amd64.tar.gz'
+    sha256 'c85d50d697c4a2e13b301bc4a65df89504ba74d42bf98c766f4e38879ffdfcff'
+    version 'v0.4.0'
 
     def install
         bin.install "tideways"
