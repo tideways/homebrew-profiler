@@ -4,17 +4,14 @@ class TidewaysDaemon < Formula
     homepage 'https://tideways.com'
     version '1.8.28'
 
-    url 'https://s3-eu-west-1.amazonaws.com/tideways/daemon/1.8.26/tideways-daemon_macos_amd64-1.8.28.tar.gz'
-    sha256 '33953995aca002777af6ada33c7ac5eaa8b1d960d154e5e4f0805a2752bfef16'
+    url 'https://s3-eu-west-1.amazonaws.com/tideways/daemon/1.8.28/tideways-daemon_macos_arm64-1.8.28.tar.gz'
+    sha256 'a7e58a7411b52b76a97977d2aa7a5ddb21a3f3b316553779a09a054c864018bf'
 
     def install
-       bin.install 'usr/bin/tideways-daemon'
+      bin.install 'tideways-daemon'
 
-       log_dir = var+'log/tideways'
-       log_dir.mkpath unless log_dir.exist?
-
-       run_dir = var+'run'
-       run_dir.mkpath unless run_dir.exist?
+      log_dir = var+'log/tideways'
+      log_dir.mkpath unless log_dir.exist?
     end
 
     def plist; <<~EOS
@@ -29,8 +26,8 @@ class TidewaysDaemon < Formula
               <key>ProgramArguments</key>
               <array>
                 <string>#{bin}/tideways-daemon</string>
-                <string>--address=#{var}/run/tidewaysd.sock</string>
-                <string>--log=#{var}/tideways/daemon.log</string>
+                <string>--address=127.0.0.1:9135</string>
+                <string>--log=#{var}/log/tideways/daemon.log</string>
                 <string>--env=development</string>
               </array>
               <key>RunAtLoad</key>
