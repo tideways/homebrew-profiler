@@ -2,41 +2,17 @@
 
 With this repository you can install the Tideways Profiler Daemon, Commandline-Tool and PHP Extension via Homebrew.
 
-> **Warning:** This only works with homebrew PHP installations or the default PHP
-> installation shipped with MacOS.  If you are using other PHP installation
-> mechanisms, for example [Acquia Dev
-> Desktop](https://www.acquia.com/drupal/acquia-dev-desktop) or [PHP OSX by
-> Liip](https://php-osx.liip.ch/) then this mechanism **will not work**. You need
-> to clone the tideways/php-profiler-extension and compile the 4.x branch
-> manually.
-
-Requirements: [homebrew-php](https://github.com/Homebrew/homebrew-php)
+> **Warning:** This only works with homebrew PHP installations for now.
 
 1. Tap this repository
 
 	    brew tap tideways/homebrew-profiler
 
-2. a.) Install PHP Extension (if you have `homebrew-php`)
+2. Install PHP Extension (if you have `homebrew-php`)
 
-	    brew install php54-tideways
-	    brew install php55-tideways
-	    brew install php56-tideways
-	    brew install php70-tideways
-	    brew install php71-tideways
-	    brew install php72-tideways
-
-    If you get an error about a missing "php.h", then try again with the flag --env=std
-
-	    brew install php71-tideways --env=std
-
-    **Notice**: The installer uses PHPs "auto_prepend_file" to load the Tideways.php library.
-    This is different from how the Linux version of Tideways works. Make sure that
-    the `/usr/local/etc/php/7.1/conf.d/ext-tideways.ini` contains the `auto_prepend_file`
-    directive.
-
-2. b.) Install PHP using System PHP
-
-        brew install php54-tideways --without-homebrew-php
+	    brew install tideways-php@8.0
+	    brew install tideways-php@8.1
+	    brew install tideways-php@8.2
 
 3. Install Daemon
 
@@ -50,16 +26,19 @@ Requirements: [homebrew-php](https://github.com/Homebrew/homebrew-php)
 
 If using this homebrew recipe is at any point complicated for you or not
 intuitive that is our mistake. Please help us improve installation by sending
-notes to [support@tideways.io](mailto:support@tideways.io).
+notes to [support@tideways.com](mailto:support@tideways.com).
 
 ## Acknowledgements
 
 This work is based on [homebrew-php](https://github.com/Homebrew/homebrew-php)
+and [shivamathur/homebrew-extensins](https://github.com/shivammathur/homebrew-extensions)
 and uses parts of their codebase to work with different PHP versions.
 
 ## License
 
-Copyright (c) 2014-2017 Tideways GmbH
+Covers code in this repository only: https://github.com/tideways/homebrew-profiler
+
+Copyright (c) 2014-2023 Tideways GmbH
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
