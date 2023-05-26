@@ -4,9 +4,8 @@
 
 # Abstract class for PHP extensions
 class AbstractTidewaysPhpExtension < Formula
-  desc "Abstract class for PHP Extension Formula"
-  homepage "https://github.com/shivammathur/homebrew-extensions"
-  license "Propriortary"
+  desc "Tideways PHP Profiler Extension"
+  homepage 'https://tideways.com'
 
   def initialize(*)
     super
