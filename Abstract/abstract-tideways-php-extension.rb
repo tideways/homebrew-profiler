@@ -38,9 +38,13 @@ class AbstractTidewaysPhpExtension < Formula
 
   def config_file_content
     <<~EOS
+      ; See https://support.tideways.com/documentation/setup/configuration/configure-tideways-globally-via-php-ini.html
       extension="#{module_path}"
       tideways.api_key=
       tideways.connection=tcp://127.0.0.1:9135
+
+      ; This setting is used if the current project is a "Profilng Space" by disabling any monitoring.
+      tideways.monitor=none
     EOS
   rescue error
     raise error
