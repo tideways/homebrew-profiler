@@ -2,14 +2,14 @@ require "formula"
 
 class TidewaysCli < Formula
     homepage 'https://tideways.com'
-    version 'v1.0.7'
+    version 'v1.0.8'
 
     if Hardware::CPU.arm?
-        url 'https://s3-eu-west-1.amazonaws.com/tideways/cli/1.0.7/tideways-cli_macos_arm64-1.0.7.tar.gz'
-        sha256 '93a50a4d42041bdf89ab7ad3a7fb3d532bd486393620db854266dc8fa6357613'
+        url 'https://s3-eu-west-1.amazonaws.com/tideways/cli/1.0.8/tideways-cli_macos_arm64-1.0.8.tar.gz'
+        sha256 '6b40adb7875887ec306f28cdd62eb862a0e6a4ee36ddd63b34ee29e8a8ff8abc'
     else
-        url 'https://s3-eu-west-1.amazonaws.com/tideways/cli/1.0.7/tideways-cli_macos_amd64-1.0.7.tar.gz'
-        sha256 'b5abef4af7e3a8bd247488e59896250595c79920547baa6c51902fc9ee274c3f'
+        url 'https://s3-eu-west-1.amazonaws.com/tideways/cli/1.0.8/tideways-cli_macos_amd64-1.0.8.tar.gz'
+        sha256 'c1a46822dcf15404b9b8a81b1f6e64d632844d5d5286efb74c61d587b140c0cc'
     end
 
     def install
