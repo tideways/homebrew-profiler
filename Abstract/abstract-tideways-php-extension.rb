@@ -7,7 +7,7 @@ class AbstractTidewaysPhpExtension < Formula
   desc "Tideways PHP Profiler Extension"
   homepage 'https://tideways.com'
 
-  def initialize(*)
+  def initialize(name, path, spec, alias_path: nil, tap: nil, force_bottle: false)
     super
     @priority = self.class.priority || "20"
   end
