@@ -1,0 +1,30 @@
+name: Update PHP Extension Formulas
+
+on:
+  push:
+  workflow_dispatch:
+  schedule:
+    - cron:  '0 17 * * *'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v2
+
+      - name: Install PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+
+      - name: Install Composer dependencies
+        run: composer install
+
+      - name: Update PHP Extension Formulas
+        run: php scripts/update_formula.php
+
+      - name: Push changes
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+            commit_message: Updated PHP Extension Formulas to latest version
