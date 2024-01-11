@@ -12,7 +12,7 @@ class TidewaysPhpAT83 < AbstractTidewaysPhpExtension
   else
     url "https://s3-eu-west-1.amazonaws.com/tideways/extension/5.6.10/tideways-php-5.6.10-macos-x86.zip"
     sha256 "450bab147cd7083a92b1d607ba6ba8f27188ca266d1269a8ecfaa54f5bef6b47"
-  end 
+  end
 
   version "5.6.10"
 

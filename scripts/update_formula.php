@@ -16,7 +16,7 @@ class TidewaysPhpAT{PHP} < AbstractTidewaysPhpExtension
     sha256 "{HASH_ARM}"
   else
     url "https://s3-eu-west-1.amazonaws.com/tideways/extension/{VERSION}/tideways-php-{VERSION}-macos-x86.zip"
-    sha256 "{HASH_X64}"
+    sha256 "{HASH_X86}"
   end
 
   version "{VERSION}"
@@ -26,6 +26,7 @@ class TidewaysPhpAT{PHP} < AbstractTidewaysPhpExtension
     write_config_file
   end
 end
+
 FORMULA;
 
 $currentVersions = json_decode(file_get_contents("https://app.tideways.io/api/current-versions"), true);
@@ -45,9 +46,10 @@ foreach ($architectures as $architecture) {
 
 
 foreach ($phpVersions as $phpVersion) {
-    file_put_contents(__DIR__ . '/../Formula/tideways-php@' . $phpVersion, str_replace(
+    file_put_contents(__DIR__ . '/../Formula/tideways-php@' . $phpVersion . '.rb',
+    str_replace(
         ['{PHP}', '{VERSION}', '{HASH_ARM}', '{HASH_X86}'],
-        [str_replace($phpVersion, '.', ''), $extensionVersion, $hashes['arm'], $hashes['x86']],
+        [str_replace('.', '', $phpVersion), $extensionVersion, $hashes['arm'], $hashes['x86']],
         $formulaTemplate
     ));
 }
