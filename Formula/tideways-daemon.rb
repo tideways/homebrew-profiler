@@ -39,10 +39,6 @@ class TidewaysDaemon < Formula
         EOS
     end
 
-    service do
-      name macos: "#{plist_name}"
-    end
-
     def caveats
         <<~EOS
 
