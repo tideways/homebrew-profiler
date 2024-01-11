@@ -3,7 +3,7 @@
 
 require File.expand_path("../Abstract/abstract-tideways-php-extension", __dir__)
 
-class TidewaysPhpAT80 < AbstractTidewaysPhpExtension
+class TidewaysPhpAT83 < AbstractTidewaysPhpExtension
   init
 
   if Hardware::CPU.arm?
