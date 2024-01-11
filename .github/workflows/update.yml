@@ -1,7 +1,6 @@
 name: Update PHP Extension Formulas
 
 on:
-  push:
   workflow_dispatch:
   schedule:
     - cron:  '0 17 * * *'
@@ -17,9 +16,6 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
-
-      - name: Install Composer dependencies
-        run: composer install
 
       - name: Update PHP Extension Formulas
         run: php scripts/update_formula.php
