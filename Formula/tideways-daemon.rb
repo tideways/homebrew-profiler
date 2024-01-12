@@ -2,10 +2,15 @@ require "formula"
 
 class TidewaysDaemon < Formula
     homepage 'https://tideways.com'
-    version '1.8.28'
+    version '1.8.40'
 
-    url 'https://s3-eu-west-1.amazonaws.com/tideways/daemon/1.8.28/tideways-daemon_macos_arm64-1.8.28.tar.gz'
-    sha256 'a7e58a7411b52b76a97977d2aa7a5ddb21a3f3b316553779a09a054c864018bf'
+    if Hardware::CPU.arm?
+      url 'https://s3-eu-west-1.amazonaws.com/tideways/daemon/1.8.40/tideways-daemon_macos_arm64-1.8.40.tar.gz'
+      sha256 '669ddeb9487ec5e946176729589233bf6bcff9677d8ceebaf6817b7f26c81035'
+    else
+      url 'https://s3-eu-west-1.amazonaws.com/tideways/daemon/1.8.40/tideways-daemon_macos_amd64-1.8.40.tar.gz'
+      sha256 '99de699ceda9c472efd8ce0bbaa9bf60a01dae73286f34c728a0c026f7361501'
+    end
 
     def install
       bin.install 'tideways-daemon'
