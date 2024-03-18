@@ -12,10 +12,10 @@ class TidewaysPhpAT{PHP} < AbstractTidewaysPhpExtension
   init
 
   if Hardware::CPU.arm?
-    url "https://s3-eu-west-1.amazonaws.com/tideways/extension/{VERSION}/tideways-php-{VERSION}-macos-arm.zip"
+    url "https://tideways.s3.amazonaws.com/extension/{VERSION}/tideways-php-{VERSION}-macos-arm.zip"
     sha256 "{HASH_ARM}"
   else
-    url "https://s3-eu-west-1.amazonaws.com/tideways/extension/{VERSION}/tideways-php-{VERSION}-macos-x86.zip"
+    url "https://tideways.s3.amazonaws.com/extension/{VERSION}/tideways-php-{VERSION}-macos-x86.zip"
     sha256 "{HASH_X86}"
   end
 
@@ -35,7 +35,7 @@ $architectures = ['arm', 'x86'];
 $hashes = [];
 
 foreach ($architectures as $architecture) {
-    $archive = file_get_contents('https://s3-eu-west-1.amazonaws.com/tideways/extension/' . $extensionVersion . '/tideways-php-' . $extensionVersion . '-macos-' . $architecture . '.zip');
+    $archive = file_get_contents('https://tideways.s3.amazonaws.com/extension/' . $extensionVersion . '/tideways-php-' . $extensionVersion . '-macos-' . $architecture . '.zip');
 
     if ($archive === false) {
         throw new RuntimeException("Could not download MacOS archive for Tideways extension version " . $extensionVersion);

@@ -5,10 +5,10 @@ class TidewaysDaemon < Formula
     version '1.8.40'
 
     if Hardware::CPU.arm?
-      url 'https://s3-eu-west-1.amazonaws.com/tideways/daemon/1.8.40/tideways-daemon_macos_arm64-1.8.40.tar.gz'
+      url 'https://tideways.s3.amazonaws.com/daemon/1.8.40/tideways-daemon_macos_arm64-1.8.40.tar.gz'
       sha256 '669ddeb9487ec5e946176729589233bf6bcff9677d8ceebaf6817b7f26c81035'
     else
-      url 'https://s3-eu-west-1.amazonaws.com/tideways/daemon/1.8.40/tideways-daemon_macos_amd64-1.8.40.tar.gz'
+      url 'https://tideways.s3.amazonaws.com/daemon/1.8.40/tideways-daemon_macos_amd64-1.8.40.tar.gz'
       sha256 '99de699ceda9c472efd8ce0bbaa9bf60a01dae73286f34c728a0c026f7361501'
     end
 
