@@ -3,14 +3,14 @@ require "formula"
 class TidewaysDaemon < Formula
     homepage 'https://tideways.com'
     version '1.9.2'
+    checksum = {
+        "arm64" => "434f1f1b46c038b810b727d850dfadfe2136d0e00ed1a4200e34d847fbb3c78b",
+        "amd64" => "7b04577b15891881860553e7097be6280db705cf52d7931f1e9869c9ad7cf6ba",
+    }
 
-    if Hardware::CPU.arm?
-      url "https://tideways.s3.amazonaws.com/daemon/#{version}/tideways-daemon_macos_arm64-#{version}.tar.gz"
-      sha256 '434f1f1b46c038b810b727d850dfadfe2136d0e00ed1a4200e34d847fbb3c78b'
-    else
-      url "https://tideways.s3.amazonaws.com/daemon/#{version}/tideways-daemon_macos_amd64-#{version}.tar.gz"
-      sha256 '7b04577b15891881860553e7097be6280db705cf52d7931f1e9869c9ad7cf6ba'
-    end
+    arch = Hardware::CPU.arm? ? "arm64" : "amd64"
+    url "https://tideways.s3.amazonaws.com/daemon/#{version}/tideways-daemon_macos_#{arch}-#{version}.tar.gz"
+    sha256 checksum[arch]
 
     def install
       bin.install 'tideways-daemon'
