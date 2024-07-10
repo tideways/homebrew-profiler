@@ -7,14 +7,14 @@ class TidewaysPhpAT82 < AbstractTidewaysPhpExtension
   init
 
   if Hardware::CPU.arm?
-    url "https://tideways.s3.amazonaws.com/extension/5.10.0/tideways-php-5.10.0-macos-arm.tar.gz"
-    sha256 "4a15450e820ecfd3ee76e5e71ddb09d2429d850a29f313400ea609281bee5143"
+    url "https://tideways.s3.amazonaws.com/extension/5.10.2/tideways-php-5.10.2-macos-arm.tar.gz"
+    sha256 "03f48d53e7b5ffd4ce4fe1a862c1a0fda784394fa4a871e1cc29a722f1811e2a"
   else
-    url "https://tideways.s3.amazonaws.com/extension/5.10.0/tideways-php-5.10.0-macos-x86.tar.gz"
-    sha256 "6dab90691d916d9491e9373d1be055532c35fbf3dbbaffc49694450354d5f630"
+    url "https://tideways.s3.amazonaws.com/extension/5.10.2/tideways-php-5.10.2-macos-x86.tar.gz"
+    sha256 "957adea7387c6ec906f9e15a3ce0e12b7ace028dd4fa4be3e69a173f7a355c8a"
   end
 
-  version "5.10.0"
+  version "5.10.2"
 
   def install
     prefix.install "tideways-php-#{php_version}.so"
