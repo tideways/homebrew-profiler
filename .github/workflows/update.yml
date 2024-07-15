@@ -1,26 +1,46 @@
-name: Update PHP Extension Formulas
+name: Update
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+    - master
+    paths:
+    - '.github/**'
   schedule:
-    - cron:  '0 17 * * *'
+  - cron: "0 11 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
-  build:
+  update:
+    name: Update Versions
     runs-on: ubuntu-latest
     steps:
-      - name: Clone repository
-        uses: actions/checkout@v2
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - uses: actions/setup-go@v5
+      with:
+        cache: false
+    - name: Run scripts/update_formula.php
+      run: php scripts/update_formula.php
+    - name: Commit changes.
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        set -x
 
-      - name: Install PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.2'
+        go install github.com/planetscale/ghcommit@latest
 
-      - name: Update PHP Extension Formulas
-        run: php scripts/update_formula.php
-
-      - name: Push changes
-        uses: stefanzweifel/git-auto-commit-action@v4
-        with:
-            commit_message: Updated PHP Extension Formulas to latest version
+        if ! git diff --quiet Formula/tideways-php@*; then
+          changed_files=()
+          for f in Formula/tideways-php@*; do
+            changed_files+=(--add "$f")
+          done
+          ghcommit -r ${{ github.repository }} \
+            -b master \
+            "${changed_files[@]}" \
+            --message "Update to tideways-php $(awk '$1 == "version"{gsub(/"/,"",$2); print $2}' ${changed_files[1]})"
+        fi
