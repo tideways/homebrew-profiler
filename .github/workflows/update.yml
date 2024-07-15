@@ -21,6 +21,6 @@ jobs:
         run: php scripts/update_formula.php
 
       - name: Push changes
-        uses: stefanzweifel/git-auto-commit-action@v4
+        uses: stefanzweifel/git-auto-commit-action@v5
         with:
             commit_message: Updated PHP Extension Formulas to latest version
