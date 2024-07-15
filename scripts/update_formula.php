@@ -10,16 +10,15 @@ require File.expand_path("../Abstract/abstract-tideways-php-extension", __dir__)
 
 class TidewaysPhpAT{PHP} < AbstractTidewaysPhpExtension
   init
+  version "{VERSION}"
 
   if Hardware::CPU.arm?
-    url "https://tideways.s3.amazonaws.com/extension/{VERSION}/tideways-php-{VERSION}-macos-arm.tar.gz"
+    url "https://tideways.s3.amazonaws.com/extension/#{version}/tideways-php-#{version}-macos-arm.tar.gz"
     sha256 "{HASH_ARM}"
   else
-    url "https://tideways.s3.amazonaws.com/extension/{VERSION}/tideways-php-{VERSION}-macos-x86.tar.gz"
+    url "https://tideways.s3.amazonaws.com/extension/#{version}/tideways-php-#{version}-macos-x86.tar.gz"
     sha256 "{HASH_X86}"
   end
-
-  version "{VERSION}"
 
   def install
     prefix.install "tideways-php-#{php_version}.so"
