@@ -1,12 +1,10 @@
 <?php
 
 set_error_handler(function (int $errno, string $errstr, string $errfile, int $errline) {
-    if (!(error_reporting() & $errno)) {
-        return;
-    }
     if ($errno === E_DEPRECATED || $errno === E_USER_DEPRECATED) {
         return false;
     }
+
     throw new \ErrorException($errstr, 0, $errno, $errfile, $errline);
 });
 
