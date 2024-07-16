@@ -44,3 +44,17 @@ jobs:
             "${changed_files[@]}" \
             --message "Update to tideways-php $(awk '$1 == "version"{gsub(/"/,"",$2); print $2}' ${changed_files[1]})"
         fi
+
+        if ! git diff --quiet Formula/tideways-daemon.rb; then
+          ghcommit -r ${{ github.repository }} \
+            -b master \
+            --add Formula/tideways-daemon.rb \
+            --message "Update to tideways-daemon $(awk '$1 == "version"{gsub(/"/,"",$2); print $2}' Formula/tideways-daemon.rb)"
+        fi
+
+        if ! git diff --quiet Formula/tideways-cli.rb; then
+          ghcommit -r ${{ github.repository }} \
+            -b master \
+            --add Formula/tideways-cli.rb \
+            --message "Update to tideways-cli $(awk '$1 == "version"{gsub(/"/,"",$2); print $2}' Formula/tideways-cli.rb)"
+        fi
