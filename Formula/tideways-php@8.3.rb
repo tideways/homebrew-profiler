@@ -5,10 +5,10 @@ require File.expand_path("../Abstract/abstract-tideways-php-extension", __dir__)
 
 class TidewaysPhpAT83 < AbstractTidewaysPhpExtension
     init
-    version "5.10.2"
+    version "5.10.4"
     checksum = {
-        "arm" => "03f48d53e7b5ffd4ce4fe1a862c1a0fda784394fa4a871e1cc29a722f1811e2a",
-        "x86" => "957adea7387c6ec906f9e15a3ce0e12b7ace028dd4fa4be3e69a173f7a355c8a",
+        "arm" => "e43f32e02bf443cc84bf55aa777cb395a255d63ca72630820fb6f866889e1f68",
+        "x86" => "ee80a365f747942ea0a081dcab62764ca4ca66df6bc31d6bb24eb1e4b6da8ee9",
     }
 
     arch = Hardware::CPU.arm? ? "arm" : "x86"
