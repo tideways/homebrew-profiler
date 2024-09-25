@@ -43,6 +43,7 @@ jobs:
             -b master \
             "${changed_files[@]}" \
             --message "Update to tideways-php $(awk '$1 == "version"{gsub(/"/,"",$2); print $2}' ${changed_files[1]})"
+          git pull --autostash
         fi
 
         if ! git diff --quiet Formula/tideways-daemon.rb; then
@@ -50,6 +51,7 @@ jobs:
             -b master \
             --add Formula/tideways-daemon.rb \
             --message "Update to tideways-daemon $(awk '$1 == "version"{gsub(/"/,"",$2); print $2}' Formula/tideways-daemon.rb)"
+          git pull --autostash
         fi
 
         if ! git diff --quiet Formula/tideways-cli.rb; then
@@ -57,4 +59,5 @@ jobs:
             -b master \
             --add Formula/tideways-cli.rb \
             --message "Update to tideways-cli $(awk '$1 == "version"{gsub(/"/,"",$2); print $2}' Formula/tideways-cli.rb)"
+          git pull --autostash
         fi
