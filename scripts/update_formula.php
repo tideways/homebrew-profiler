@@ -11,7 +11,7 @@ set_error_handler(function (int $errno, string $errstr, string $errfile, int $er
 $currentVersions = json_decode(file_get_contents("https://app.tideways.io/api/current-versions"), true, flags: JSON_THROW_ON_ERROR);
 
 echo "tideways-php", PHP_EOL;
-foreach (['8.0', '8.1', '8.2', '8.3'] as $phpVersion) {
+foreach (['8.0', '8.1', '8.2', '8.3', '8.4'] as $phpVersion) {
     echo "- {$phpVersion}", PHP_EOL;
     $phpVersionNoDots = str_replace('.', '', $phpVersion);
     $extensionVersion = $currentVersions['php']['version'] ?? throw new RuntimeException("Current Tideways extension version not found in current versions payload.");
