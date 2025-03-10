@@ -69,7 +69,7 @@ class AbstractTidewaysPhpExtension < Formula
   class << self
     attr_reader :php_version, :extension
 
-    attr_rw :priority
+    attr_accessor :priority
 
     def parse_extension(matches)
       @extension = matches[1].downcase if matches
