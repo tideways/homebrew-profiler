@@ -2,10 +2,10 @@ require "formula"
 
 class TidewaysDaemon < Formula
     homepage 'https://tideways.com'
-    version "1.9.36"
+    version "1.9.38"
     checksum = {
-        "arm64" => "b88eea38eee78f7d815eb3453264255f7da8993e0ac6bb9ffc9ec0eb7410eb6c",
-        "amd64" => "d60de6ba4f092b76dc39ef2911d7080f96f37d917fb8dd4501d7f24c61b53caa",
+        "arm64" => "f97f966c7b4e156e181b24668f7f3c6c11f48c77b35a73df4c18a23b0dcb1456",
+        "amd64" => "e4eb4dea1f012d8efdae065afbb42850bc7ccb112fc6922b95ed1fc57b4d64df",
     }
 
     arch = Hardware::CPU.arm? ? "arm64" : "amd64"
