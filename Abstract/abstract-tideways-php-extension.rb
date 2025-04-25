@@ -43,7 +43,7 @@ class AbstractTidewaysPhpExtension < Formula
       tideways.api_key=
       tideways.connection=tcp://127.0.0.1:9135
 
-      ; This setting is used if the current project is a "Profilng Space" by disabling any monitoring.
+      ; This setting is used if the current project is a "Profiling Space", disabling any monitoring.
       tideways.monitor=none
     EOS
   rescue error
