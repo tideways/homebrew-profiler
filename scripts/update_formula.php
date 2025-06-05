@@ -105,6 +105,10 @@ file_put_contents(
                 log_path var/"log/tideways/daemon.log"
             end
 
+            test do
+                system opt_bin/"tideways-daemon", "-version"
+            end
+
             def caveats
                 <<~EOS
 
@@ -153,6 +157,10 @@ file_put_contents(
 
             def install
                 bin.install "tideways"
+            end
+
+            test do
+                system opt_bin/"tideways", "version"
             end
 
             def caveats

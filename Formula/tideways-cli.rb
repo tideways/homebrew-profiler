@@ -25,6 +25,10 @@ class TidewaysCli < Formula
         bin.install "tideways"
     end
 
+    test do
+        system opt_bin/"tideways", "version"
+    end
+
     def caveats
         return <<~EOS
         Follow the instructions on Tideways Profiler website
