@@ -23,13 +23,15 @@ class TidewaysDaemon < Formula
 
     def install
         bin.install 'tideways-daemon'
+    end
 
-        log_dir = var+'log/tideways'
-        log_dir.mkpath unless log_dir.exist?
+    def post_install
+        (var/"log/tideways").mkpath
     end
 
     service do
-        run [opt_bin/"tideways-daemon", "--address", "127.0.0.1:9135", "--log", HOMEBREW_PREFIX/"var/log/tideways/daemon.log", "--env", "development"]
+        run [opt_bin/"tideways-daemon", "--address", "127.0.0.1:9135", "--env", "development"]
+        log_path var/"log/tideways/daemon.log"
     end
 
     def caveats
