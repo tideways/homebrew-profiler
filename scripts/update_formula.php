@@ -15,8 +15,10 @@ foreach (['8.0', '8.1', '8.2', '8.3', '8.4'] as $phpVersion) {
     echo "- {$phpVersion}", PHP_EOL;
     $phpVersionNoDots = str_replace('.', '', $phpVersion);
     $extensionVersion = $currentVersions['php']['version'] ?? throw new RuntimeException("Current Tideways extension version not found in current versions payload.");
-    $hashArm = hash_file('sha256', "https://tideways.s3.amazonaws.com/extension/{$extensionVersion}/tideways-php-{$extensionVersion}-macos-arm.tar.gz") ?: throw new RuntimeException("Failed to determine ARM hash.");
-    $hashX86 = hash_file('sha256', "https://tideways.s3.amazonaws.com/extension/{$extensionVersion}/tideways-php-{$extensionVersion}-macos-x86.tar.gz") ?: throw new RuntimeException("Failed to determine x86 hash.");
+    $hashMacosArm = hash_file('sha256', "https://tideways.s3.amazonaws.com/extension/{$extensionVersion}/tideways-php-{$extensionVersion}-macos-arm.tar.gz") ?: throw new RuntimeException("Failed to determine macOS ARM hash.");
+    $hashMacosX86 = hash_file('sha256', "https://tideways.s3.amazonaws.com/extension/{$extensionVersion}/tideways-php-{$extensionVersion}-macos-x86.tar.gz") ?: throw new RuntimeException("Failed to determine macOS x86 hash.");
+    $hashLinuxArm64 = hash_file('sha256', "https://tideways.s3.amazonaws.com/extension/{$extensionVersion}/tideways-php-{$extensionVersion}-arm64.tar.gz") ?: throw new RuntimeException("Failed to determine Linux ARM64 hash.");
+    $hashLinuxX86_64 = hash_file('sha256', "https://tideways.s3.amazonaws.com/extension/{$extensionVersion}/tideways-php-{$extensionVersion}-x86_64.tar.gz") ?: throw new RuntimeException("Failed to determine Linux x86_64 hash.");
 
     file_put_contents(
         __DIR__ . "/../Formula/tideways-php@{$phpVersion}.rb",
@@ -30,13 +32,22 @@ foreach (['8.0', '8.1', '8.2', '8.3', '8.4'] as $phpVersion) {
                 init
                 version "{$extensionVersion}"
                 checksum = {
-                    "arm" => "{$hashArm}",
-                    "x86" => "{$hashX86}",
+                    "macos-arm" => "{$hashMacosArm}",
+                    "macos-x86" => "{$hashMacosX86}",
+                    "arm64" => "{$hashLinuxArm64}",
+                    "x86_64" => "{$hashLinuxX86_64}",
                 }
 
-                arch = Hardware::CPU.arm? ? "arm" : "x86"
-                url "https://tideways.s3.amazonaws.com/extension/#{version}/tideways-php-#{version}-macos-#{arch}.tar.gz"
-                sha256 checksum[arch]
+                if OS.linux?
+                    os = ""
+                    arch = Hardware::CPU.arm? ? "arm64" : "x86_64"
+                else
+                    os = "macos-"
+                    arch = Hardware::CPU.arm? ? "arm" : "x86"
+                end
+
+                url "https://tideways.s3.amazonaws.com/extension/#{version}/tideways-php-#{version}-#{os}#{arch}.tar.gz"
+                sha256 checksum["#{os}#{arch}"]
 
                 def install
                     prefix.install "tideways-php-#{php_version}.so"
@@ -50,8 +61,10 @@ foreach (['8.0', '8.1', '8.2', '8.3', '8.4'] as $phpVersion) {
 
 echo "tideways-daemon", PHP_EOL;
 $daemonVersion = $currentVersions['daemon']['version'] ?? throw new RuntimeException("Current Tideways extension version not found in current versions payload.");
-$hashArm64 = hash_file('sha256', "https://tideways.s3.amazonaws.com/daemon/{$daemonVersion}/tideways-daemon_macos_arm64-{$daemonVersion}.tar.gz") ?: throw new RuntimeException("Failed to determine ARM64 hash.");
-$hashAmd64 = hash_file('sha256', "https://tideways.s3.amazonaws.com/daemon/{$daemonVersion}/tideways-daemon_macos_amd64-{$daemonVersion}.tar.gz") ?: throw new RuntimeException("Failed to determine AMD64 hash.");
+$hashMacosArm64 = hash_file('sha256', "https://tideways.s3.amazonaws.com/daemon/{$daemonVersion}/tideways-daemon_macos_arm64-{$daemonVersion}.tar.gz") ?: throw new RuntimeException("Failed to determine macOS ARM64 hash.");
+$hashMacosAmd64 = hash_file('sha256', "https://tideways.s3.amazonaws.com/daemon/{$daemonVersion}/tideways-daemon_macos_amd64-{$daemonVersion}.tar.gz") ?: throw new RuntimeException("Failed to determine macOS AMD64 hash.");
+$hashLinuxAarch64 = hash_file('sha256', "https://tideways.s3.amazonaws.com/daemon/{$daemonVersion}/tideways-daemon_linux_aarch64-{$daemonVersion}.tar.gz") ?: throw new RuntimeException("Failed to determine Linux aarch64 hash.");
+$hashLinuxAmd64 = hash_file('sha256', "https://tideways.s3.amazonaws.com/daemon/{$daemonVersion}/tideways-daemon_linux_amd64-{$daemonVersion}.tar.gz") ?: throw new RuntimeException("Failed to determine Linux AMD64 hash.");
 
 file_put_contents(
     __DIR__ . '/../Formula/tideways-daemon.rb',
@@ -62,13 +75,22 @@ file_put_contents(
             homepage 'https://tideways.com'
             version "{$daemonVersion}"
             checksum = {
-                "arm64" => "{$hashArm64}",
-                "amd64" => "{$hashAmd64}",
+                "macos-arm64" => "{$hashMacosArm64}",
+                "macos-amd64" => "{$hashMacosAmd64}",
+                "linux-aarch64" => "{$hashLinuxAarch64}",
+                "linux-amd64" => "{$hashLinuxAmd64}",
             }
 
-            arch = Hardware::CPU.arm? ? "arm64" : "amd64"
-            url "https://tideways.s3.amazonaws.com/daemon/#{version}/tideways-daemon_macos_#{arch}-#{version}.tar.gz"
-            sha256 checksum[arch]
+            if OS.linux?
+                os = "linux"
+                arch = Hardware::CPU.arm? ? "aarch64" : "amd64"
+            else
+                os = "macos"
+                arch = Hardware::CPU.arm? ? "arm64" : "amd64"
+            end
+
+            url "https://tideways.s3.amazonaws.com/daemon/#{version}/tideways-daemon_#{os}_#{arch}-#{version}.tar.gz"
+            sha256 checksum["#{os}-#{arch}"]
 
             def install
                 bin.install 'tideways-daemon'
@@ -96,8 +118,10 @@ file_put_contents(
 
 echo "tideways-cli", PHP_EOL;
 $cliVersion = $currentVersions['cli']['version'] ?? throw new RuntimeException("Current Tideways extension version not found in current versions payload.");
-$hashArm64 = hash_file('sha256', "https://tideways.s3.amazonaws.com/cli/{$cliVersion}/tideways-cli_macos_arm64-{$cliVersion}.tar.gz") ?: throw new RuntimeException("Failed to determine ARM64 hash.");
-$hashAmd64 = hash_file('sha256', "https://tideways.s3.amazonaws.com/cli/{$cliVersion}/tideways-cli_macos_amd64-{$cliVersion}.tar.gz") ?: throw new RuntimeException("Failed to determine AMD64 hash.");
+$hashMacosArm64 = hash_file('sha256', "https://tideways.s3.amazonaws.com/cli/{$cliVersion}/tideways-cli_macos_arm64-{$cliVersion}.tar.gz") ?: throw new RuntimeException("Failed to determine macOS ARM64 hash.");
+$hashMacosAmd64 = hash_file('sha256', "https://tideways.s3.amazonaws.com/cli/{$cliVersion}/tideways-cli_macos_amd64-{$cliVersion}.tar.gz") ?: throw new RuntimeException("Failed to determine macOS AMD64 hash.");
+$hashLinuxArm64 = hash_file('sha256', "https://tideways.s3.amazonaws.com/cli/{$cliVersion}/tideways-cli_linux_arm64-{$cliVersion}.tar.gz") ?: throw new RuntimeException("Failed to determine Linux ARM64 hash.");
+$hashLinuxAmd64 = hash_file('sha256', "https://tideways.s3.amazonaws.com/cli/{$cliVersion}/tideways-cli_linux_amd64-{$cliVersion}.tar.gz") ?: throw new RuntimeException("Failed to determine Linux AMD64 hash.");
 
 file_put_contents(
     __DIR__ . '/../Formula/tideways-cli.rb',
@@ -108,13 +132,22 @@ file_put_contents(
             homepage 'https://tideways.com'
             version "{$cliVersion}"
             checksum = {
-                "arm64" => "{$hashArm64}",
-                "amd64" => "{$hashAmd64}",
+                "macos-arm64" => "{$hashMacosArm64}",
+                "macos-amd64" => "{$hashMacosAmd64}",
+                "linux-arm64" => "{$hashLinuxArm64}",
+                "linux-amd64" => "{$hashLinuxAmd64}",
             }
 
-            arch = Hardware::CPU.arm? ? "arm64" : "amd64"
-            url "https://tideways.s3.amazonaws.com/cli/#{version}/tideways-cli_macos_#{arch}-#{version}.tar.gz"
-            sha256 checksum[arch]
+            if OS.linux?
+                os = "linux"
+                arch = Hardware::CPU.arm? ? "arm64" : "amd64"
+            else
+                os = "macos"
+                arch = Hardware::CPU.arm? ? "arm64" : "amd64"
+            end
+
+            url "https://tideways.s3.amazonaws.com/cli/#{version}/tideways-cli_#{os}_#{arch}-#{version}.tar.gz"
+            sha256 checksum["#{os}-#{arch}"]
 
             def install
                 bin.install "tideways"
