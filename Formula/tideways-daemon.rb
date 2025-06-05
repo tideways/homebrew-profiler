@@ -34,6 +34,10 @@ class TidewaysDaemon < Formula
         log_path var/"log/tideways/daemon.log"
     end
 
+    test do
+        system opt_bin/"tideways-daemon", "-version"
+    end
+
     def caveats
         <<~EOS
 
