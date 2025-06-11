@@ -2,42 +2,38 @@
 # frozen_string_literal: true
 # https://raw.githubusercontent.com/shivammathur/homebrew-extensions/master/Abstract/abstract-php-extension.rb
 
-# Abstract class for PHP extensions
 class AbstractTidewaysPhpExtension < Formula
   desc "Tideways PHP Profiler Extension"
   homepage 'https://tideways.com'
 
-  def initialize(name, path, spec, alias_path: nil, tap: nil, force_bottle: false)
-    super
-    @priority = self.class.priority || "20"
-  end
-
   def caveats
     <<~EOS
-      To finish installing #{extension} for PHP #{php_version}:
-        * #{config_filepath} was created,"
-          do not forget to remove it upon extension removal."
+      To finish installing tideways for PHP #{php_version}:
+        * #{pkgetc/"tideways.ini"} was created,
+          do not forget to remove it upon extension removal.
         * Validate installation by running php -m
     EOS
   end
 
   test do
     output = shell_output("#{Formula[php_formula].opt_bin}/php -m").downcase
-    assert_match(/#{extension.downcase}/, output, "failed to find extension in php -m output")
+    assert_match(/tideways/, output, "failed to find extension in php -m output")
   end
 
   private
 
-  attr_reader :priority
-
-  delegate [:php_version, :extension] => :"self.class"
+  delegate [:php_version] => :"self.class"
 
   def module_path
-    opt_prefix / "#{extension}-php-#{php_version}.so"
+    opt_prefix/"tideways-php-#{php_version}.so"
   end
 
-  def config_file_content
-    <<~EOS
+  def config_filepath
+    etc/"php"/php_version/"conf.d"/"20-tideways.ini"
+  end
+
+  def write_config_file
+    (buildpath/"tideways.ini").write <<~EOS
       ; See https://support.tideways.com/documentation/setup/configuration/configure-tideways-globally-via-php-ini.html
       extension="#{module_path}"
       tideways.api_key=
@@ -46,40 +42,17 @@ class AbstractTidewaysPhpExtension < Formula
       ; This setting is used if the current project is a "Profiling Space", disabling any monitoring.
       tideways.monitor=none
     EOS
-  rescue error
-    raise error
-  end
-
-  def config_scandir_path
-    etc / "php" / php_version / "conf.d"
-  end
-
-  def config_filepath
-    config_scandir_path / "#{priority}-#{extension}.ini"
-  end
-
-  def write_config_file
-    Dir[config_scandir_path / "*#{extension}*.ini"].each do |ini_file|
-      rm ini_file
-    end
-    config_scandir_path.mkpath
-    config_filepath.write(config_file_content)
+    pkgetc.install buildpath/"tideways.ini"
+    rm config_filepath if config_filepath.exist? && !config_filepath.symlink?
+    ln_s pkgetc/"tideways.ini", config_filepath unless config_filepath.symlink?
   end
 
   class << self
-    attr_reader :php_version, :extension
-
-    attr_accessor :priority
-
-    def parse_extension(matches)
-      @extension = matches[1].downcase if matches
-      @extension.gsub("pecl", "").gsub("pdo", "pdo_").gsub("xdebug2", "xdebug").gsub(/phalcon\d+/, "phalcon")
-    end
+    attr_reader :php_version
 
     def init
       class_name = name.split("::").last
       matches = /(\w+)AT(\d)(\d)/.match(class_name)
-      @extension = "tideways"
       @php_version = "#{matches[2]}.#{matches[3]}" if matches
     end
   end
