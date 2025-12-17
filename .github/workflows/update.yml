@@ -23,6 +23,7 @@ jobs:
         fetch-depth: 0
     - uses: actions/setup-go@v6
       with:
+        go-version: stable
         cache: false
     - name: Run scripts/update_formula.php
       run: php scripts/update_formula.php
