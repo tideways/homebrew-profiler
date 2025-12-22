@@ -14,6 +14,8 @@ With this repository you can install the Tideways Profiler Daemon, Commandline-T
 	    brew install tideways-php@8.1
 	    brew install tideways-php@8.2
 	    brew install tideways-php@8.3
+	    brew install tideways-php@8.4
+	    brew install tideways-php@8.5
 
 4. Install Daemon
 
