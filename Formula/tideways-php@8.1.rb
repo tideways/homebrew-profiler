@@ -5,12 +5,12 @@ require File.expand_path("../Abstract/abstract-tideways-php-extension", __dir__)
 
 class TidewaysPhpAT81 < AbstractTidewaysPhpExtension
     init
-    version "5.34.0"
+    version "5.34.4"
     checksum = {
-        "macos-arm" => "f2b28cf8fbc60e7bd3680eef82f0e67462f7e6817e52b0d400eacdcccc6c785b",
-        "macos-x86" => "7f059987fc6a01eaea58fa63b266185a57c313ce1b8d2d871abb3f75926051b6",
-        "arm64" => "172085e378100af18e4f9abd0924ec9a1a90f4c3dd0ccb7a5bc028befae90aaa",
-        "x86_64" => "fa65657bc47b680ffdeb3c14f05701c8f53a3493613266f8ad75e945a875ca99",
+        "macos-arm" => "31e7a0a5345824340317225f117dc65019b12af9c1f4e223887800e78f0b8fa6",
+        "macos-x86" => "920052ba3299cff0fa1ae599058f9db78309f488a288c2e8a759326f58ec2fce",
+        "arm64" => "866f23f2bdde2b06b671168dae95a98d06a64c5e8dd9724a94d87d81314a91db",
+        "x86_64" => "b8ed22222de27c6295d4e230397f7d07246194b6363697a6cb4187ca1306a3e9",
     }
 
     if OS.linux?
