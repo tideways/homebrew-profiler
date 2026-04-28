@@ -2,12 +2,12 @@ require "formula"
 
 class TidewaysDaemon < Formula
     homepage 'https://tideways.com'
-    version "1.16.0"
+    version "1.17.0"
     checksum = {
-        "macos-arm64" => "31990876742b7c55378bb1d083c3119885fcd0f224190d71799a2b4cfd17fe63",
-        "macos-amd64" => "38a49f6d850c69b4001b623db1ee3c84247a937ccd7e63f171b0ac57078aaa47",
-        "linux-aarch64" => "d0621f7f027e019b149e2895ae41cd12dc76213869bbdce86a60ec31e06c2478",
-        "linux-amd64" => "0fda43d1266c33328bc5fdb7c36b0d1dec181d755b331102417b99634ca1576a",
+        "macos-arm64" => "78f109209706dfbe39455b179b8aef73a657557d9482fe9f0a8a9ece2855df43",
+        "macos-amd64" => "d7109d5a328ac22f6e2ff723d93f65a047cf8ad11fcd59347d12417a5c74674e",
+        "linux-aarch64" => "4ecc2a945f0d99cdf3cb33e724d839c8ca3663680a256068ecc7543197dceccb",
+        "linux-amd64" => "493d7042cd99f7fddf5fde58010aa81d98cab18b713e347e56552fdd52661120",
     }
 
     if OS.linux?
