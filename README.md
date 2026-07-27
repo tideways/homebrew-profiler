@@ -9,7 +9,7 @@ With this repository you can install the Tideways Profiler Daemon, Commandline-T
 	    brew tap tideways/homebrew-profiler
    	    brew trust tideways/homebrew-profiler
 
-3. Install PHP Extension (if you have `homebrew-php`)
+2. Install PHP Extension (if you have `homebrew-php`)
 
 	    brew install tideways-php@8.0
 	    brew install tideways-php@8.1
@@ -18,11 +18,11 @@ With this repository you can install the Tideways Profiler Daemon, Commandline-T
 	    brew install tideways-php@8.4
 	    brew install tideways-php@8.5
 
-4. Install Daemon
+3. Install Daemon
 
 	    brew install tideways-daemon
 
-5. Install Commandline Tool
+4. Install Commandline Tool
 
 	    brew install tideways-cli
 
