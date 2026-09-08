@@ -8,6 +8,9 @@ set_error_handler(function (int $errno, string $errstr, string $errfile, int $er
     throw new \ErrorException($errstr, 0, $errno, $errfile, $errline);
 });
 
+// Last tideways-php release with a macOS Intel build.
+$macosX86Version = '5.44.0';
+
 $currentVersions = json_decode(file_get_contents("https://app.tideways.io/api/current-versions"), true, flags: JSON_THROW_ON_ERROR);
 
 echo "tideways-php", PHP_EOL;
@@ -16,7 +19,7 @@ foreach (['8.0', '8.1', '8.2', '8.3', '8.4', '8.5'] as $phpVersion) {
     $phpVersionNoDots = str_replace('.', '', $phpVersion);
     $extensionVersion = $currentVersions['php']['version'] ?? throw new RuntimeException("Current Tideways extension version not found in current versions payload.");
     $hashMacosArm = hash_file('sha256', "https://tideways.s3.amazonaws.com/extension/{$extensionVersion}/tideways-php-{$extensionVersion}-macos-arm.tar.gz") ?: throw new RuntimeException("Failed to determine macOS ARM hash.");
-    $hashMacosX86 = hash_file('sha256', "https://tideways.s3.amazonaws.com/extension/{$extensionVersion}/tideways-php-{$extensionVersion}-macos-x86.tar.gz") ?: throw new RuntimeException("Failed to determine macOS x86 hash.");
+    $hashMacosX86 = hash_file('sha256', "https://tideways.s3.amazonaws.com/extension/{$macosX86Version}/tideways-php-{$macosX86Version}-macos-x86.tar.gz") ?: throw new RuntimeException("Failed to determine macOS x86 hash.");
     $hashLinuxArm64 = hash_file('sha256', "https://tideways.s3.amazonaws.com/extension/{$extensionVersion}/tideways-php-{$extensionVersion}-arm64.tar.gz") ?: throw new RuntimeException("Failed to determine Linux ARM64 hash.");
     $hashLinuxX86_64 = hash_file('sha256', "https://tideways.s3.amazonaws.com/extension/{$extensionVersion}/tideways-php-{$extensionVersion}-x86_64.tar.gz") ?: throw new RuntimeException("Failed to determine Linux x86_64 hash.");
 
@@ -30,7 +33,6 @@ foreach (['8.0', '8.1', '8.2', '8.3', '8.4', '8.5'] as $phpVersion) {
 
             class TidewaysPhpAT{$phpVersionNoDots} < AbstractTidewaysPhpExtension
                 init
-                version "{$extensionVersion}"
                 checksum = {
                     "macos-arm" => "{$hashMacosArm}",
                     "macos-x86" => "{$hashMacosX86}",
@@ -45,6 +47,9 @@ foreach (['8.0', '8.1', '8.2', '8.3', '8.4', '8.5'] as $phpVersion) {
                     os = "macos-"
                     arch = Hardware::CPU.arm? ? "arm" : "x86"
                 end
+
+                # macOS x86 (Intel) is pinned to the last release with an Intel build.
+                version("#{os}#{arch}" == "macos-x86" ? "{$macosX86Version}" : "{$extensionVersion}")
 
                 url "https://tideways.s3.amazonaws.com/extension/#{version}/tideways-php-#{version}-#{os}#{arch}.tar.gz"
                 sha256 checksum["#{os}#{arch}"]
