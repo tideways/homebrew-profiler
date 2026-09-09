@@ -14,7 +14,7 @@ $macosX86Version = '5.44.0';
 $currentVersions = json_decode(file_get_contents("https://app.tideways.io/api/current-versions"), true, flags: JSON_THROW_ON_ERROR);
 
 echo "tideways-php", PHP_EOL;
-$extensionVersion = $currentVersions['php']['version'] ?? throw new RuntimeException("Current Tideways extension version not found in current versions payload.");
+$extensionVersion = $currentVersions['php']['version'] ?? throw new RuntimeException("Current Tideways Extension version not found in current versions payload.");
 $hashMacosArm = hash_file('sha256', "https://tideways.s3.amazonaws.com/extension/{$extensionVersion}/tideways-php-{$extensionVersion}-macos-arm.tar.gz") ?: throw new RuntimeException("Failed to determine macOS ARM hash.");
 $hashMacosX86 = hash_file('sha256', "https://tideways.s3.amazonaws.com/extension/{$macosX86Version}/tideways-php-{$macosX86Version}-macos-x86.tar.gz") ?: throw new RuntimeException("Failed to determine macOS x86 hash.");
 $hashLinuxArm64 = hash_file('sha256', "https://tideways.s3.amazonaws.com/extension/{$extensionVersion}/tideways-php-{$extensionVersion}-arm64.tar.gz") ?: throw new RuntimeException("Failed to determine Linux ARM64 hash.");
@@ -66,7 +66,7 @@ foreach (['8.0', '8.1', '8.2', '8.3', '8.4', '8.5'] as $phpVersion) {
 }
 
 echo "tideways-daemon", PHP_EOL;
-$daemonVersion = $currentVersions['daemon']['version'] ?? throw new RuntimeException("Current Tideways extension version not found in current versions payload.");
+$daemonVersion = $currentVersions['daemon']['version'] ?? throw new RuntimeException("Current Tideways Daemon version not found in current versions payload.");
 $hashMacosArm64 = hash_file('sha256', "https://tideways.s3.amazonaws.com/daemon/{$daemonVersion}/tideways-daemon_macos_arm64-{$daemonVersion}.tar.gz") ?: throw new RuntimeException("Failed to determine macOS ARM64 hash.");
 $hashMacosAmd64 = hash_file('sha256', "https://tideways.s3.amazonaws.com/daemon/{$daemonVersion}/tideways-daemon_macos_amd64-{$daemonVersion}.tar.gz") ?: throw new RuntimeException("Failed to determine macOS AMD64 hash.");
 $hashLinuxAarch64 = hash_file('sha256', "https://tideways.s3.amazonaws.com/daemon/{$daemonVersion}/tideways-daemon_linux_aarch64-{$daemonVersion}.tar.gz") ?: throw new RuntimeException("Failed to determine Linux aarch64 hash.");
@@ -129,7 +129,7 @@ file_put_contents(
 
 
 echo "tideways-cli", PHP_EOL;
-$cliVersion = $currentVersions['cli']['version'] ?? throw new RuntimeException("Current Tideways extension version not found in current versions payload.");
+$cliVersion = $currentVersions['cli']['version'] ?? throw new RuntimeException("Current Tideways CLI version not found in current versions payload.");
 $hashMacosArm64 = hash_file('sha256', "https://tideways.s3.amazonaws.com/cli/{$cliVersion}/tideways-cli_macos_arm64-{$cliVersion}.tar.gz") ?: throw new RuntimeException("Failed to determine macOS ARM64 hash.");
 $hashMacosAmd64 = hash_file('sha256', "https://tideways.s3.amazonaws.com/cli/{$cliVersion}/tideways-cli_macos_amd64-{$cliVersion}.tar.gz") ?: throw new RuntimeException("Failed to determine macOS AMD64 hash.");
 $hashLinuxArm64 = hash_file('sha256', "https://tideways.s3.amazonaws.com/cli/{$cliVersion}/tideways-cli_linux_arm64-{$cliVersion}.tar.gz") ?: throw new RuntimeException("Failed to determine Linux ARM64 hash.");
