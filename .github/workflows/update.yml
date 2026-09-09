@@ -43,7 +43,7 @@ jobs:
           ghcommit -r ${{ github.repository }} \
             -b master \
             "${changed_files[@]}" \
-            --message "Update to tideways-php $(awk '$1 == "version"{gsub(/"/,"",$2); print $2}' ${changed_files[1]})"
+            --message "Update to tideways-php $(awk '$1 ~ /^version/{gsub(/[")]/,"",$NF); print $NF}' ${changed_files[1]})"
           git pull --autostash
         fi
 
@@ -51,7 +51,7 @@ jobs:
           ghcommit -r ${{ github.repository }} \
             -b master \
             --add Formula/tideways-daemon.rb \
-            --message "Update to tideways-daemon $(awk '$1 == "version"{gsub(/"/,"",$2); print $2}' Formula/tideways-daemon.rb)"
+            --message "Update to tideways-daemon $(awk '$1 ~ /^version/{gsub(/[")]/,"",$NF); print $NF}' Formula/tideways-daemon.rb)"
           git pull --autostash
         fi
 
@@ -59,6 +59,6 @@ jobs:
           ghcommit -r ${{ github.repository }} \
             -b master \
             --add Formula/tideways-cli.rb \
-            --message "Update to tideways-cli $(awk '$1 == "version"{gsub(/"/,"",$2); print $2}' Formula/tideways-cli.rb)"
+            --message "Update to tideways-cli $(awk '$1 ~ /^version/{gsub(/[")]/,"",$NF); print $NF}' Formula/tideways-cli.rb)"
           git pull --autostash
         fi
