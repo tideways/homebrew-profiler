@@ -33,7 +33,13 @@ class AbstractTidewaysPhpExtension < Formula
   end
 
   def write_config_file
-    (buildpath/"tideways.ini").write <<~EOS
+    # The Linux tarballs ship with tideways.ini, which Brew refuses to overwrite with a
+    #   RuntimeError: Will not overwrite […]/tideways-php-5.47.0/tideways.ini
+    # error. Create a custom file in buildpath and link it to the expected name during
+    # `pkgetc.install`.
+
+    generated_config = buildpath/"tideways.ini.homebrew"
+    generated_config.write <<~EOS
       ; See https://support.tideways.com/documentation/setup/configuration/configure-tideways-globally-via-php-ini.html
       extension="#{module_path}"
       tideways.api_key=
@@ -42,7 +48,7 @@ class AbstractTidewaysPhpExtension < Formula
       ; This setting is used if the current project is a "Profiling Space", disabling any monitoring.
       tideways.monitor=none
     EOS
-    pkgetc.install buildpath/"tideways.ini"
+    pkgetc.install generated_config => "tideways.ini"
     rm config_filepath if config_filepath.exist? && !config_filepath.symlink?
     ln_s pkgetc/"tideways.ini", config_filepath unless config_filepath.symlink?
   end
