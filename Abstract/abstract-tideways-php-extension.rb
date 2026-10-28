@@ -49,6 +49,7 @@ class AbstractTidewaysPhpExtension < Formula
       tideways.monitor=none
     EOS
     pkgetc.install generated_config => "tideways.ini"
+    config_filepath.dirname.mkpath
     rm config_filepath if config_filepath.exist? && !config_filepath.symlink?
     ln_s pkgetc/"tideways.ini", config_filepath unless config_filepath.symlink?
   end
