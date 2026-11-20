@@ -20,7 +20,7 @@ $hashMacosX86 = hash_file('sha256', "https://tideways.s3.amazonaws.com/extension
 $hashLinuxArm64 = hash_file('sha256', "https://tideways.s3.amazonaws.com/extension/{$extensionVersion}/tideways-php-{$extensionVersion}-arm64.tar.gz") ?: throw new RuntimeException("Failed to determine Linux ARM64 hash.");
 $hashLinuxX86_64 = hash_file('sha256', "https://tideways.s3.amazonaws.com/extension/{$extensionVersion}/tideways-php-{$extensionVersion}-x86_64.tar.gz") ?: throw new RuntimeException("Failed to determine Linux x86_64 hash.");
 
-foreach (['8.0', '8.1', '8.2', '8.3', '8.4', '8.5'] as $phpVersion) {
+foreach (['8.0', '8.1', '8.2', '8.3', '8.4', '8.5', '8.6'] as $phpVersion) {
     echo "- {$phpVersion}", PHP_EOL;
     $phpVersionNoDots = str_replace('.', '', $phpVersion);
 
