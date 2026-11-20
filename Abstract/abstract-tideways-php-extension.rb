@@ -61,6 +61,13 @@ class AbstractTidewaysPhpExtension < Formula
       class_name = name.split("::").last
       matches = /(\w+)AT(\d)(\d)/.match(class_name)
       @php_version = "#{matches[2]}.#{matches[3]}" if matches
+
+      # The last Intel macOS release (5.44.0) only supports PHP through 8.5.
+      if @php_version && Gem::Version.new(@php_version) >= Gem::Version.new("8.6")
+        on_macos do
+          depends_on arch: :arm64
+        end
+      end
     end
   end
 end
